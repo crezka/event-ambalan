@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QR & Barcode Scanner Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome untuk Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html5-qrcode library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        /* Custom Styles & Overrides */
+        body { background-color: #121212; color: #ffffff; overscroll-behavior-y: none; }
+        #reader { width: 100%; border-radius: 0.5rem; overflow: hidden; background: #000; }
+        #reader video { object-fit: cover; }
+        /* Hide some default html5-qrcode elements to keep UI clean */
+        #reader__dashboard_section_csr { display: none !important; }
+        #reader__dashboard_section_swaplink { display: none !important; }
+        /* Smooth transitions */
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Modal Background */
+        .modal-bg { background-color: rgba(0, 0, 0, 0.75); }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-gray-900 shadow-md p-4 flex justify-between items-center z-10 border-b border-gray-800">
+        <h1 class="text-xl font-bold tracking-wider text-green-500"><i class="fa-solid fa-qrcode mr-2"></i>ScannerPro</h1>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 relative overflow-y-auto pb-20">
+        
+        <!-- 1. SCANNER VIEW -->
+        <section id="view-scanner" class="view-section active h-full flex flex-col items-center justify-center p-4 relative">
+            <div class="relative w-full max-w-md mx-auto aspect-[3/4] sm:aspect-square flex items-center justify-center rounded-xl overflow-hidden shadow-2xl border-2 border-gray-700">
+                <div id="reader"></div>
+                <!-- Scanning overlay styling (target box) -->
+                <div class="absolute inset-0 border-[40px] border-black/40 pointer-events-none flex items-center justify-center">
+                    <div class="w-full h-full border-2 border-green-500 relative">
+                        <!-- Corner accents -->
+                        <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-500"></div>
+                        <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-500"></div>
+                        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-500"></div>
+                        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-500"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Controls -->
+            <div class="mt-8 flex gap-6 justify-center w-full max-w-md">
+                <button id="btn-flash" class="bg-gray-800 hover:bg-gray-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition" onclick="toggleFlash()">
+                    <i class="fa-solid fa-bolt text-xl"></i>
+                </button>
+                <button id="btn-flip" class="bg-gray-800 hover:bg-gray-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition" onclick="flipCamera()">
+                    <i class="fa-solid fa-camera-rotate text-xl"></i>
+                </button>
+            </div>
+            <p id="scanner-status" class="mt-4 text-gray-400 text-sm">Mencari kamera...</p>
+        </section>
+
+        <!-- 2. HISTORY VIEW -->
+        <section id="view-history" class="view-section h-full p-4">
+            <div class="flex justify-between items-center mb-4 max-w-2xl mx-auto">
+                <h2 class="text-2xl font-semibold">Riwayat Scan</h2>
+                <button onclick="clearHistory()" class="text-red-400 hover:text-red-300 text-sm font-medium"><i class="fa-solid fa-trash mr-1"></i>Hapus Semua</button>
+            </div>
+            <div id="history-list" class="space-y-3 max-w-2xl mx-auto">
+                <!-- History items will be populated here via JS -->
+            </div>
+        </section>
+
+        <!-- 3. SETTINGS VIEW -->
+        <section id="view-settings" class="view-section h-full p-4">
+            <div class="max-w-2xl mx-auto space-y-6">
+                <h2 class="text-2xl font-semibold mb-4">Pengaturan</h2>
+                
+                <div class="bg-gray-800 p-5 rounded-xl space-y-4">
+                    <h3 class="text-lg font-medium text-green-400"><i class="fa-brands fa-google mr-2"></i>Integrasi Spreadsheet</h3>
+                    
+                    <div class="flex items-center justify-between">
+                        <label for="toggle-autosave" class="text-sm font-medium text-gray-300">Auto-save ke Spreadsheet</label>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-autosave" class="sr-only peer" onchange="saveSettings()">
+                            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Google Apps Script Web App URL</label>
+                        <input type="text" id="input-gas-url" onchange="saveSettings()" placeholder="https://script.google.com/macros/s/..." class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm text-white focus:ring-green-500 focus:border-green-500 outline-none transition">
+                    </div>
+
+                    <div class="text-xs text-gray-400 mt-2 bg-gray-900/50 p-3 rounded-lg">
+                        <strong>Cara kerja:</strong> Buat script di Google Spreadsheet (Extensions > Apps Script), gunakan fungsi <code>doPost(e)</code>, deploy sebagai Web App (akses: anyone). Aplikasi ini akan mengirim POST request (JSON) dengan parameter <code>text</code> dan <code>timestamp</code>.
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 p-5 rounded-xl">
+                    <h3 class="text-lg font-medium mb-2">Tentang</h3>
+                    <p class="text-sm text-gray-400">QR & Barcode Scanner App v1.0. Dibuat menggunakan HTML5, Tailwind CSS, dan library html5-qrcode.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bg-gray-900 border-t border-gray-800 fixed bottom-0 w-full z-20">
+        <div class="flex justify-around items-center h-16 max-w-md mx-auto">
+            <button onclick="switchView('scanner')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-green-500 transition-colors" data-target="scanner">
+                <i class="fa-solid fa-qrcode text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">Scanner</span>
+            </button>
+            <button onclick="switchView('history')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 transition-colors" data-target="history">
+                <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">History</span>
+            </button>
+            <button onclick="switchView('settings')" class="nav-btn flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 transition-colors" data-target="settings">
+                <i class="fa-solid fa-gear text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 modal-bg z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-800 w-11/12 max-w-sm rounded-2xl shadow-2xl p-6 transform scale-95 transition-transform duration-300" id="modal-content">
+            <div class="text-center mb-4">
+                <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-green-500">
+                    <i class="fa-solid fa-check text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold">Hasil Scan</h3>
+                <p id="modal-timestamp" class="text-xs text-gray-400 mt-1"></p>
+            </div>
+            
+            <div class="bg-gray-900 rounded-lg p-4 mb-5 border border-gray-700">
+                <p id="modal-text" class="text-sm break-all font-mono"></p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="copyModalText()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg text-sm font-medium transition">
+                    <i class="fa-regular fa-copy mr-2"></i>Salin
+                </button>
+                <button onclick="closeModal()" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg text-sm font-medium transition">
+                    Tutup
+                </button>
+            </div>
+            
+            <p id="sync-status" class="text-center text-xs mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // --- State Management ---
+        let html5QrCode;
+        let currentFacingMode = "environment"; // environment (back) or user (front)
+        let isFlashOn = false;
+        let isScanning = false;
+        
+        // Data Structures
+        let historyData = JSON.parse(localStorage.getItem('qr_history')) || [];
+        let appSettings = JSON.parse(localStorage.getItem('qr_settings')) || {
+            autoSave: false,
+            gasUrl: ''
+        };
+
+        // --- Audio Beep Generator ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep() {
+            if (navigator.vibrate) navigator.vibrate(100);
+            
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // 800Hz
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initSettings();
+            renderHistory();
+            startScanner();
+        });
+
+        // --- Navigation Logic ---
+        function switchView(target) {
+            // Update nav styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.target === target) {
+                    btn.classList.replace('text-gray-400', 'text-green-500');
+                } else {
+                    btn.classList.replace('text-green-500', 'text-gray-400');
+                }
+            });
+
+            // Update views
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(`view-${target}`).classList.add('active');
+
+            // Manage Scanner State based on view
+            if (target === 'scanner' && !isScanning) {
+                startScanner();
+            } else if (target !== 'scanner' && isScanning) {
+                stopScanner();
+            }
+        }
+
+        // --- Scanner Logic ---
+        function startScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const statusEl = document.getElementById('scanner-status');
+            
+            statusEl.innerText = "Memulai kamera...";
+            html5QrCode.start(
+                { facingMode: currentFacingMode },
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).then(() => {
+                isScanning = true;
+                statusEl.innerText = currentFacingMode === 'environment' ? "Kamera Belakang Aktif" : "Kamera Depan Aktif";
+            }).catch((err) => {
+                statusEl.innerText = "Gagal mengakses kamera. Pastikan izin diberikan.";
+                console.error("Camera Error:", err);
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                }).catch(err => console.log("Failed to stop scanner", err));
+            }
+        }
+
+        function flipCamera() {
+            if (isScanning) {
+                stopScanner();
+                currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+                setTimeout(startScanner, 300); // Wait a bit before restarting
+            }
+        }
+
+        function toggleFlash() {
+            if (html5QrCode && isScanning) {
+                // html5-qrcode flash support is limited and depends on the device/browser.
+                // We attempt to apply video constraints here if supported.
+                isFlashOn = !isFlashOn;
+                const btn = document.getElementById('btn-flash');
+                
+                try {
+                    html5QrCode.applyVideoConstraints({
+                        advanced: [{ torch: isFlashOn }]
+                    }).then(() => {
+                        btn.classList.toggle('text-yellow-400', isFlashOn);
+                        btn.classList.toggle('text-white', !isFlashOn);
+                    }).catch(err => {
+                        alert("Flash tidak didukung di perangkat/browser ini.");
+                        isFlashOn = false;
+                    });
+                } catch(e) {
+                     alert("Fitur flash tidak didukung.");
+                }
+            }
+        }
+
+        // --- Scan Success Handling ---
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop parsing temporarily to prevent rapid re-scans
+            if(document.getElementById('result-modal').classList.contains('hidden') === false) return;
+            
+            playBeep();
+            
+            const timestamp = new Date().toLocaleString('id-ID');
+            
+            // Save to history
+            const scanData = {
+                id: Date.now(),
+                text: decodedText,
+                timestamp: timestamp
+            };
+            historyData.unshift(scanData);
+            localStorage.setItem('qr_history', JSON.stringify(historyData));
+            renderHistory();
+
+            // Show Modal
+            showModal(decodedText, timestamp);
+
+            // Sync to Google Sheet if Auto-save is on
+            if (appSettings.autoSave && appSettings.gasUrl.trim() !== '') {
+                syncToSpreadsheet(scanData);
+            }
+        }
+
+        function onScanFailure(error) {
+            // Ignore ongoing frame scanning errors
+        }
+
+        // --- Spreadsheet Integration ---
+        function syncToSpreadsheet(data) {
+            const syncStatus = document.getElementById('sync-status');
+            syncStatus.classList.remove('hidden');
+            syncStatus.className = 'text-center text-xs mt-4 text-yellow-400';
+            syncStatus.innerText = 'Menyinkronkan ke Spreadsheet...';
+
+            // Using no-cors mode to avoid preflight issues with simple Google Apps Script
+            fetch(appSettings.gasUrl, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: data.text,
+                    timestamp: data.timestamp
+                })
+            }).then(response => {
+                // Since mode is no-cors, we won't get a readable response. Assume success if fetch doesn't throw.
+                syncStatus.className = 'text-center text-xs mt-4 text-green-400';
+                syncStatus.innerText = 'Berhasil disimpan ke Spreadsheet!';
+            }).catch(err => {
+                console.error("Sync Error", err);
+                syncStatus.className = 'text-center text-xs mt-4 text-red-400';
+                syncStatus.innerText = 'Gagal menyimpan ke Spreadsheet.';
+            });
+        }
+
+        // --- History Logic ---
+        function renderHistory() {
+            const listEl = document.getElementById('history-list');
+            listEl.innerHTML = '';
+            
+            if (historyData.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-gray-500 mt-10">Belum ada riwayat scan.</p>';
+                return;
+            }
+
+            historyData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-gray-800 p-4 rounded-xl flex flex-col shadow-sm border border-gray-700";
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs text-gray-400"><i class="fa-regular fa-clock mr-1"></i>${item.timestamp}</span>
+                        <button onclick="deleteHistoryItem(${item.id})" class="text-gray-500 hover:text-red-400"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <p class="text-sm text-gray-100 font-mono break-all mb-3">${item.text}</p>
+                    <button onclick="copyToClipboard('${item.text.replace(/'/g, "\\'")}')" class="text-xs font-medium text-green-400 hover:text-green-300 self-start">
+                        <i class="fa-regular fa-copy mr-1"></i> Salin Teks
+                    </button>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        function clearHistory() {
+            if (confirm('Apakah Anda yakin ingin menghapus semua riwayat?')) {
+                historyData = [];
+                localStorage.removeItem('qr_history');
+                renderHistory();
+            }
+        }
+
+        function deleteHistoryItem(id) {
+            historyData = historyData.filter(item => item.id !== id);
+            localStorage.setItem('qr_history', JSON.stringify(historyData));
+            renderHistory();
+        }
+
+        // --- Settings Logic ---
+        function initSettings() {
+            document.getElementById('toggle-autosave').checked = appSettings.autoSave;
+            document.getElementById('input-gas-url').value = appSettings.gasUrl;
+        }
+
+        function saveSettings() {
+            appSettings.autoSave = document.getElementById('toggle-autosave').checked;
+            appSettings.gasUrl = document.getElementById('input-gas-url').value;
+            localStorage.setItem('qr_settings', JSON.stringify(appSettings));
+        }
+
+        // --- UI / Modal Utilities ---
+        function showModal(text, timestamp) {
+            document.getElementById('modal-text').innerText = text;
+            document.getElementById('modal-timestamp').innerText = timestamp;
+            document.getElementById('sync-status').classList.add('hidden');
+            
+            const modal = document.getElementById('result-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modal.classList.remove('hidden');
+            // small delay to allow display block to apply before animating opacity
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('result-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function copyModalText() {
+            const text = document.getElementById('modal-text').innerText;
+            copyToClipboard(text);
+        }
+
+        function copyToClipboard(text) {
+            // Using modern clipboard API if available, else fallback
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Teks disalin ke clipboard!');
+                });
+            } else {
+                // Fallback for older browsers / non-HTTPS
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed"; left: "-999999px"; top: "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Teks disalin ke clipboard!');
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        // Simple Toast Notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg text-sm z-50 transition-opacity duration-300';
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => { toast.classList.add('opacity-0'); }, 2000);
+            setTimeout(() => { document.body.removeChild(toast); }, 2300);
+        }
+
+    </script>
+</body>
+</html>
