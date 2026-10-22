@@ -20,7 +20,7 @@
             height: 100% !important; 
         }
 
-        /* PERBAIKAN: Menyembunyikan bingkai dan area gelap bawaan library agar tidak double */
+        /* Menyembunyikan elemen bawaan library agar tidak double frame */
         #reader svg { display: none !important; }
         #qr-shaded-region { display: none !important; }
     </style>
@@ -135,6 +135,7 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Getar 200ms saat sukses
                 if (navigator.vibrate) navigator.vibrate(200); 
 
                 showStatus("✅ Tersimpan!", "success");
@@ -144,7 +145,7 @@
                 document.getElementById('resTicket').innerText = scannedData.ticket || "-";
                 document.getElementById('resAngkatan').innerText = scannedData.angkatan || "-";
 
-                // Jeda 0.2 detik
+                // Jeda 0.2 detik (200ms) sebelum lanjut scan lagi
                 setTimeout(() => {
                     statusMessage.classList.add('hidden');
                     isProcessing = false;
@@ -168,11 +169,14 @@
             
             html5QrCode = new Html5Qrcode("reader");
             
-            // Konfigurasi tanpa qrbox agar full screen
+            // OPTIMASI TINGKAT TINGGI UNTUK KECEPATAN:
             const config = { 
                 fps: 30, 
-                disableFlip: false,
-                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] 
+                disableFlip: true, // Menghemat 50% CPU karena tidak mencari QR Code versi cermin
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ], // Hanya mencari tipe QR
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true // Menggunakan hardware akselerasi bawaan HP
+                }
             };
 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
