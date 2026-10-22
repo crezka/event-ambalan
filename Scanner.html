@@ -75,8 +75,8 @@
         }
     </style>
 
-    <script>
-        // URL GOOGLE APPS SCRIPT ANDA
+  <script>
+        // MASUKKAN URL GOOGLE APPS SCRIPT ANDA DI SINI
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOQYJi1UsMdKSxBHfh729p2Ios8T_p_IgNObINUB2a6TAyD88N8EC71CLlb__Z7j5dlg/exec";
 
         const statusMessage = document.getElementById('statusMessage');
@@ -120,10 +120,10 @@
             if (isProcessing) return;
             isProcessing = true;
             
-            // Jeda kamera agar tidak scan berulang kali
+            // Jeda kamera sementara
             html5QrCode.pause();
             
-            showStatus("⏳ Menyimpan data ke Spreadsheet...", "loading");
+            showStatus("⏳ Menyimpan...", "loading");
             resultCard.classList.add('hidden');
 
             const scannedData = parseQRText(decodedText);
@@ -134,29 +134,34 @@
             })
             .then(response => response.json())
             .then(data => {
-                showStatus("✅ Sukses! Data tersimpan.", "success");
+                // Efek getar di HP saat sukses (membantu panitia scan lebih cepat)
+                if (navigator.vibrate) {
+                    navigator.vibrate(200); 
+                }
+
+                showStatus("✅ Tersimpan!", "success");
                 
                 resultCard.classList.remove('hidden');
                 document.getElementById('resName').innerText = scannedData.name || "-";
                 document.getElementById('resTicket').innerText = scannedData.ticket || "-";
                 document.getElementById('resAngkatan').innerText = scannedData.angkatan || "-";
 
-                // Lanjutkan scanner setelah 2 detik
+                // PERCEPATAN JEDA: Lanjutkan scanner dalam 0.8 detik (sebelumnya 2 detik)
                 setTimeout(() => {
                     statusMessage.classList.add('hidden');
                     isProcessing = false;
                     html5QrCode.resume();
-                }, 2000);
+                }, 800);
             })
             .catch(error => {
                 console.error("Error:", error);
-                showStatus("❌ Gagal menyimpan! Cek koneksi.", "error");
+                showStatus("❌ Gagal! Cek koneksi.", "error");
 
                 setTimeout(() => {
                     statusMessage.classList.add('hidden');
                     isProcessing = false;
                     html5QrCode.resume();
-                }, 3000);
+                }, 2000);
             });
         }
 
@@ -165,17 +170,15 @@
             
             html5QrCode = new Html5Qrcode("reader");
             
-            // KONFIGURASI BARU: Tanpa batas area (qrbox) agar memindai 1 Layar Penuh
             const config = { 
-                fps: 15, 
-                disableFlip: false 
+                fps: 30, // PERCEPATAN FPS: Ditingkatkan dari 15 ke 30 agar lebih instan
+                disableFlip: false,
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] 
             };
 
-            // SISTEM BARU: Coba kamera belakang (HP) dulu
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .catch(err => {
                 console.log("Kamera belakang tidak ditemukan, beralih ke webcam...");
-                // Jika tidak ada kamera belakang (di laptop), otomatis pakai webcam depan
                 html5QrCode.start({ facingMode: "user" }, config, onScanSuccess)
                 .catch(err2 => {
                     alert("Gagal membuka kamera. Tolong izinkan akses kamera di pengaturan browser Anda.");
@@ -184,5 +187,3 @@
             });
         });
     </script>
-</body>
-</html>
