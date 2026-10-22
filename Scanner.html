@@ -30,7 +30,7 @@
 
     <!-- UI Overlay Bingkai Scanner -->
     <div class="fixed inset-0 z-10 pointer-events-none flex flex-col items-center justify-center">
-        <!-- Bingkai Putih (Hanya sebagai panduan visual) -->
+        <!-- Bingkai Putih (Panduan visual) -->
         <div class="relative w-64 h-64 sm:w-72 sm:h-72">
             <div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
             <div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
@@ -40,7 +40,7 @@
             <!-- Garis Scan -->
             <div class="absolute top-0 left-0 w-full h-1 bg-red-500/80 shadow-[0_0_15px_red] animate-[scan_2s_ease-in-out_infinite]"></div>
         </div>
-        <p class="mt-8 text-sm text-white font-medium tracking-wide drop-shadow-md bg-black/50 px-4 py-2 rounded-full">Arahkan QR Code ke arah layar</p>
+        <p class="mt-8 text-sm text-white font-medium tracking-wide drop-shadow-md bg-black/50 px-4 py-2 rounded-full">Arahkan QR Code ke dalam bingkai</p>
     </div>
 
     <!-- Pop-up Notifikasi -->
@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <!-- Tombol Mulai (Wajib untuk memicu akses kamera di HP) -->
+    <!-- Tombol Mulai -->
     <div id="startOverlay" class="fixed inset-0 bg-emerald-950 z-50 flex flex-col items-center justify-center px-4 text-center">
         <div class="w-16 h-16 rounded-full bg-gold-500/20 border-2 border-[#d4af37] flex items-center justify-center text-[#d4af37] text-2xl mb-6">
             <i class="fa-solid fa-qrcode"></i>
@@ -76,7 +76,6 @@
     </style>
 
     <script>
-        // URL GOOGLE APPS SCRIPT ANDA
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOQYJi1UsMdKSxBHfh729p2Ios8T_p_IgNObINUB2a6TAyD88N8EC71CLlb__Z7j5dlg/exec";
 
         const statusMessage = document.getElementById('statusMessage');
@@ -93,7 +92,6 @@
                 if (parts.length >= 2) {
                     const key = parts[0].trim().toLowerCase();
                     const value = parts.slice(1).join(':').trim();
-                    
                     if (key.includes('ticket')) data.ticket = value;
                     else if (key.includes('name')) data.name = value;
                     else if (key.includes('angkatan')) data.angkatan = value;
@@ -120,9 +118,7 @@
             if (isProcessing) return;
             isProcessing = true;
             
-            // Jeda kamera sementara
             html5QrCode.pause();
-            
             showStatus("⏳ Menyimpan...", "loading");
             resultCard.classList.add('hidden');
 
@@ -134,11 +130,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Efek getar di HP saat sukses
-                if (navigator.vibrate) {
-                    navigator.vibrate(200); 
-                }
-
+                if (navigator.vibrate) navigator.vibrate(200); 
                 showStatus("✅ Tersimpan!", "success");
                 
                 resultCard.classList.remove('hidden');
@@ -146,22 +138,19 @@
                 document.getElementById('resTicket').innerText = scannedData.ticket || "-";
                 document.getElementById('resAngkatan').innerText = scannedData.angkatan || "-";
 
-                // PERCEPATAN: Lanjutkan scanner dalam 0.8 detik
                 setTimeout(() => {
                     statusMessage.classList.add('hidden');
                     isProcessing = false;
                     html5QrCode.resume();
-                }, 100);
+                }, 200); // 0.2 Detik
             })
             .catch(error => {
-                console.error("Error:", error);
                 showStatus("❌ Gagal! Cek koneksi.", "error");
-
                 setTimeout(() => {
                     statusMessage.classList.add('hidden');
                     isProcessing = false;
                     html5QrCode.resume();
-                }, 200);
+                }, 2000);
             });
         }
 
@@ -170,15 +159,29 @@
             
             html5QrCode = new Html5Qrcode("reader");
             
+            // FUNGSI BARU: Membatasi algoritma memproses 85% area layar saja agar CPU HP tidak kelebihan beban (Bikin lebih instan)
+            const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+                let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                let qrboxSize = Math.floor(minEdgeSize * 0.85); 
+                return { width: qrboxSize, height: qrboxSize };
+            };
+            
             const config = { 
-                fps: 30, // Ditingkatkan agar lebih instan
+                fps: 30, 
+                qrbox: qrboxFunction,
                 disableFlip: false,
-                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] 
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
+                // FUNGSI BARU: Meminta kamera resolusi tinggi (HD) & Auto-focus
+                videoConstraints: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    advanced: [{ focusMode: "continuous" }]
+                }
             };
 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
             .catch(err => {
-                console.log("Kamera belakang tidak ditemukan, beralih ke webcam...");
+                console.log("Beralih ke webcam...");
                 html5QrCode.start({ facingMode: "user" }, config, onScanSuccess)
                 .catch(err2 => {
                     alert("Gagal membuka kamera. Tolong izinkan akses kamera di pengaturan browser Anda.");
