@@ -382,17 +382,14 @@
 
     <!-- ========================================== -->
     <!-- INTERACTIVE RSVP CONFIRMATION MODAL CARD   -->
-    <!-- (UKURAN DIPERKECIL AGAR MUAT DI LAYAR HP)  -->
     <!-- ========================================== -->
     <div id="ticketModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
-        <!-- max-w-sm dan padding dikurangi agar lebih ringkas -->
         <div class="relative w-full max-w-sm glass-card rounded-2xl p-5 sm:p-6 gold-border-glow shadow-2xl text-center transform scale-95 transition-transform duration-300" id="modalCard">
             
             <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white w-8 h-8 rounded-full bg-emerald-900/60 flex items-center justify-center transition-all z-10" id="closeModalBtn">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <!-- Ikon ukuran diperkecil -->
             <div class="w-14 h-14 rounded-full bg-gold-500/20 border-2 border-gold-400 text-gold-300 flex items-center justify-center text-2xl mx-auto mb-3 animate-bounce">
                 <i class="fa-solid fa-circle-check"></i>
             </div>
@@ -401,7 +398,6 @@
             <h3 class="font-cinzel text-xl font-bold text-white mb-1">XXXXX</h3>
             <p class="text-[11px] text-gold-200 font-playfair italic mb-4">Theme Row</p>
 
-            <!-- Tabel detail tiket diperkecil padding & font-nya -->
             <div class="bg-emerald-950/90 rounded-xl p-3 border border-gold-500/30 text-left space-y-1.5 mb-4 text-[11px] sm:text-xs">
                 <div class="flex justify-between border-b border-emerald-900 pb-1.5"><span class="text-gray-400">Ticket Code:</span><span id="ticketCode" class="font-mono text-gold-300 font-bold">#BBRN-3062</span></div>
                 <div class="flex justify-between border-b border-emerald-900 pb-1.5"><span class="text-gray-400">Guest Name:</span><span id="modalName" class="text-white font-semibold">-</span></div>
@@ -413,10 +409,8 @@
 
             <p class="text-[10px] text-gray-300 mb-4 font-light leading-tight">Ticket Confirmed! Please save this e-ticket as proof when attending the event.</p>
 
-            <!-- WADAH QR CODE -->
             <div id="qrcode" class="flex justify-center mb-4 p-2.5 bg-white/10 rounded-xl border border-gold-500/20 mx-auto w-fit"></div>
 
-            <!-- Tombol unduh/salin diperkecil marginnya -->
             <button onclick="downloadTicketImage()" id="downloadBtn" class="w-full py-2.5 mb-2 rounded-xl bg-gold-400 text-emerald-950 font-bold text-[11px] uppercase tracking-wider shadow-lg hover:bg-gold-300 transition-all">
                 <i class="fa-solid fa-download mr-2"></i> Unduh E-Ticket
             </button>
@@ -429,6 +423,19 @@
 
     <!-- Scripts for interactivity -->
     <script>
+        // ==========================================
+        // 1. BLOKIR INSPECT ELEMENT & SOURCE CODE
+        // ==========================================
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        document.onkeydown = function(e) {
+            if (e.key === "F12" || 
+               (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) || 
+               (e.ctrlKey && e.key === "U")) {
+                return false;
+            }
+        };
+
         // ==========================================
         // SCRIPT: LOGIKA SALJU (SNOW CANVAS)
         // ==========================================
@@ -593,14 +600,12 @@
             const code = document.getElementById('ticketCode').innerText;
             const angkatan = angkatanInput.value;
 
-            // Efek tombol Loading
             const submitBtn = document.getElementById('submitBtn');
             const originalBtnText = submitBtn.innerHTML;
             submitBtn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Sending...";
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
 
-            // Data untuk dikirim ke Formspree
             const formData = new FormData();
             formData.append("Nama Lengkap", name);
             formData.append("Angkatan", angkatan);
@@ -609,7 +614,6 @@
             formData.append("Nomor WhatsApp", phone);
             formData.append("Pesan / Harapan", message);
 
-            // Fetch ke Formspree URL Anda
             fetch("https://formspree.io/f/xbgdvanj", {
                 method: "POST",
                 body: formData,
@@ -619,7 +623,6 @@
             })
             .then(response => {
                 if (response.ok) {
-                    // Jika sukses kirim email, munculkan pop-up E-Ticket
                     document.getElementById('modalName').innerText = name;
                     document.getElementById('modalStatus').innerText = status;
                     document.getElementById('modalCount').innerText = count + " (Angkatan " + angkatan + ")";
@@ -627,7 +630,6 @@
                     document.getElementById('qrcode').innerHTML = ""; 
                     const qrData = `Ticket: ${code}\nName: ${name}\nAngkatan: ${angkatan}\nStatus: ${status}\nGuest: ${count}`;
                     
-                    // PERBAIKAN: UKURAN QR DIPERBESAR TAPI TETAP COMPACT (150x150)
                     new QRCode(document.getElementById("qrcode"), {
                         text: qrData,
                         width: 150,           
@@ -644,9 +646,7 @@
                         document.getElementById('modalCard').classList.remove('scale-95');
                     }, 10);
                     
-                    // (Opsional) Kosongkan form setelah sukses
                     document.getElementById('rsvpForm').reset();
-                    // Reset tombol angkatan
                     genButtons.forEach(b => {
                         b.classList.remove('bg-gold-400', 'text-emerald-950', 'border-gold-400');
                         b.classList.add('border-gold-500/30', 'text-gold-300');
@@ -661,7 +661,6 @@
                 alert("Oops! Tidak dapat terhubung ke server (cek koneksi internet Anda).");
             })
             .finally(() => {
-                // Kembalikan tombol ke kondisi semula
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
