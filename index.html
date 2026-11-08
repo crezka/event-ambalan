@@ -1,728 +1,891 @@
 <!DOCTYPE html>
-<html lang="id" class="scroll-smooth">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome - Theme Row</title>
+    <title>Advanced Event Inventory</title>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Pustaka QR Code & html2canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        emerald: { 950: '#031710', 900: '#05291c', 800: '#09422e', 700: '#0f5c41', 600: '#157e5a' },
-                        gold: { 100: '#fcf8e3', 300: '#f5e296', 400: '#ebd06a', 500: '#d4af37', 600: '#aa8822', 700: '#7e6212' }
-                    },
-                    fontFamily: {
-                        cinzel: ['Cinzel', 'serif'],
-                        montserrat: ['Montserrat', 'sans-serif'],
-                        playfair: ['Playfair Display', 'serif']
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' }
                     }
                 }
             }
         }
     </script>
 
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
-        /* Custom Styles & CSS 3D Door Animations */
-        body { font-family: 'Montserrat', sans-serif; background-color: #031710; color: #f3f4f6; overflow-x: hidden; }
-        .text-gold-gradient { background: linear-gradient(135deg, #fceabb 0%, #fccd4d 50%, #d4af37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .gold-border-glow { border: 1px solid rgba(212, 175, 55, 0.35); box-shadow: 0 0 25px rgba(212, 175, 55, 0.12), inset 0 0 15px rgba(212, 175, 55, 0.05); }
-        .glass-card { background: rgba(5, 41, 28, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(212, 175, 55, 0.25); }
+        body { font-family: 'Inter', sans-serif; }
+        .transition-colors { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 300ms; }
         
-        .door-viewport { perspective: 1200px; perspective-origin: center center; }
-        .door-wrapper { transform-style: preserve-3d; }
-        .door-leaf { background: linear-gradient(135deg, #ffffff 0%, #f4f6f8 60%, #e2e8f0 100%); transition: transform 2.2s cubic-bezier(0.25, 1, 0.3, 1); transform-style: preserve-3d; box-shadow: inset 0 0 20px rgba(0,0,0,0.08), 0 10px 30px rgba(0,0,0,0.5); }
-        .door-left { transform-origin: left center; }
-        .door-right { transform-origin: right center; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
         
-        .door-viewport.opened .door-left { transform: rotateY(-115deg); }
-        .door-viewport.opened .door-right { transform: rotateY(115deg); }
-        
-        .door-panel { border: 3px solid #e2e8f0; box-shadow: inset 2px 2px 6px rgba(0,0,0,0.06), 2px 2px 4px rgba(255,255,255,0.9); border-radius: 4px; }
-        .door-handle { background: linear-gradient(180deg, #fceabb 0%, #d4af37 50%, #aa8822 100%); box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.8); }
-        
-        #snowCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; opacity: 0; transition: opacity 2s ease; }
-        #snowCanvas.active { opacity: 1; }
-        
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        .btn-shimmer { background: linear-gradient(90deg, #d4af37 0%, #fff3c4 50%, #d4af37 100%); background-size: 200% 100%; animation: shimmer 3s infinite linear; }
-        
-        @keyframes floatSlow { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
-        .animate-float { animation: floatSlow 6s ease-in-out infinite; }
+        /* Modal Animation */
+        .modal-enter { animation: modalFadeIn 0.2s ease-out forwards; }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
-<body class="bg-emerald-950 text-gray-100 min-h-screen relative selection:bg-gold-500 selection:text-emerald-950">
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors min-h-screen flex flex-col antialiased">
 
-    <canvas id="snowCanvas"></canvas>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex flex-col items-center justify-center transition-colors">
+        <i class="ph ph-spinner animate-spin text-4xl text-brand-500 mb-4"></i>
+        <p class="text-slate-500 dark:text-slate-400 font-medium">Initializing Workspace...</p>
+    </div>
 
-    <!-- ========================================== -->
-    <!-- INITIAL LANDING PAGE: 3D WHITE DOOR SCREEN -->
-    <!-- ========================================== -->
-    <div id="doorOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-[#020e0a] via-[#052218] to-[#020e0a] overflow-hidden transition-opacity duration-1000">
-        <div class="absolute w-[90vw] max-w-[600px] h-[90vw] max-w-[600px] bg-gold-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="door-viewport relative w-full max-w-lg h-[88vh] max-h-[780px] p-4 flex flex-col justify-center items-center">
+    <!-- Login Screen -->
+    <div id="login-screen" class="hidden fixed inset-0 bg-slate-50 dark:bg-slate-900 z-40 flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-8 text-center modal-enter">
+            <div class="w-16 h-16 bg-brand-50 dark:bg-brand-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i class="ph ph-package text-3xl text-brand-600 dark:text-brand-400"></i>
+            </div>
+            <h1 class="text-2xl font-bold mb-2 dark:text-white">Event Inventory Pro</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">Manage your event logistics, track borrowers, and monitor returns with precision.</p>
             
-            <div class="w-full max-w-md bg-gradient-to-r from-gold-700 via-gold-400 to-gold-700 h-3 rounded-t-lg shadow-lg relative z-30 mb-0 flex items-center justify-center">
-                <div class="w-16 h-4 bg-gold-300 rounded-b-md shadow-md border-t border-gold-600"></div>
-            </div>
-
-            <div class="door-wrapper relative w-full max-w-md h-[80%] flex border-4 border-gold-600/60 rounded-b-lg overflow-hidden shadow-2xl bg-emerald-950/80">
-                
-                <!-- LEFT DOOR -->
-                <div class="door-leaf door-left w-1/2 h-full border-r border-slate-300 flex flex-col justify-between p-4 sm:p-6 relative z-20">
-                    <div class="door-panel w-full h-[45%] bg-slate-50 flex items-center justify-center relative"><div class="w-3/4 h-3/4 border border-slate-200 rounded"></div></div>
-                    <div class="door-panel w-full h-[45%] bg-slate-50 flex items-center justify-center relative"><div class="w-3/4 h-3/4 border border-slate-200 rounded"></div></div>
-                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-30">
-                        <div class="w-3 h-12 door-handle rounded-full"></div>
-                        <div class="w-2 h-2 bg-gold-700 rounded-full"></div>
-                    </div>
-                </div>
-
-                <!-- RIGHT DOOR -->
-                <div class="door-leaf door-right w-1/2 h-full border-l border-slate-300 flex flex-col justify-between p-4 sm:p-6 relative z-20">
-                    <div class="door-panel w-full h-[45%] bg-slate-50 flex items-center justify-center relative"><div class="w-3/4 h-3/4 border border-slate-200 rounded"></div></div>
-                    <div class="door-panel w-full h-[45%] bg-slate-50 flex items-center justify-center relative"><div class="w-3/4 h-3/4 border border-slate-200 rounded"></div></div>
-                    <div class="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-30">
-                        <div class="w-3 h-12 door-handle rounded-full"></div>
-                        <div class="w-2 h-2 bg-gold-700 rounded-full"></div>
-                    </div>
-                </div>
-
-                <!-- INNER CONTENT -->
-                <div class="absolute inset-0 z-10 flex flex-col items-center justify-center text-center p-6 bg-gradient-to-b from-emerald-900 via-emerald-950 to-black">
-                    <i class="fa-solid fa-envelope-open-text text-gold-400 text-4xl mb-3 animate-bounce"></i>
-                    <h3 class="font-cinzel text-xl text-gold-300 tracking-widest uppercase font-bold">Welcome</h3>
-                    <p class="text-xs text-emerald-200 mt-2 font-montserrat tracking-wider">Preparing a Special Invitation...</p>
-                </div>
-            </div>
-
-            <!-- Tombol Open Door -->
-            <div class="mt-6 text-center z-30 flex flex-col items-center">
-                <p class="text-xs tracking-[0.3em] uppercase text-gold-300 font-cinzel mb-1">YOU ARE CORDIALLY INVITED</p>
-                <h1 class="font-cinzel font-black text-2xl sm:text-3xl text-gold-gradient tracking-wide mb-1">WELCOME</h1>
-                <p class="font-playfair italic text-sm text-gold-200/90 mb-4">Theme Row</p>
-                
-                <button type="button" id="openDoorBtn" onclick="handleOpenDoor()" class="group relative inline-flex items-center gap-3 px-7 py-3 rounded-full btn-shimmer text-emerald-950 font-bold font-montserrat text-sm uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
-                    <span>Open the door</span>
-                    <i class="font-montserrat font-bold transition-transform duration-300 group-hover:translate-x-1"></i>
-                </button>
-            </div>
-
+            <button onclick="App.loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-100 font-medium py-3 px-4 rounded-xl transition-all shadow-sm">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.58c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google
+            </button>
+            <div id="login-error" class="mt-4 text-red-500 text-sm hidden"></div>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MAIN INVITATION CONTENT (REVEALED CONTENT) -->
-    <!-- ========================================== -->
-    <main id="mainContent" class="opacity-0 transition-opacity duration-1000 min-h-screen pb-20 relative z-10 hidden">
-
-        <!-- Header -->
-        <header class="sticky top-0 z-40 bg-emerald-950/80 backdrop-blur-md border-b border-gold-500/20 px-4 py-3">
-            <div class="max-w-4xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
-                    <span class="font-cinzel font-bold text-lg text-gold-300 tracking-wider">Welcome</span>
+    <!-- Main App Structure -->
+    <div id="app-screen" class="hidden flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Navbar -->
+        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm z-10 flex-shrink-0">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-brand-500 rounded-lg text-white">
+                        <i class="ph ph-package text-xl"></i>
+                    </div>
+                    <span class="font-bold text-lg hidden sm:block dark:text-white">Event Inventory Pro</span>
                 </div>
-                <div class="text-xs font-cinzel text-gold-200 bg-emerald-900/80 px-3 py-1 rounded-full border border-gold-500/30">Theme Row</div>
+                
+                <nav class="flex items-center gap-2 md:gap-4">
+                    <button onclick="App.setView('inventory')" id="nav-inventory" class="nav-btn active px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                        <i class="ph ph-list-dashes text-xl"></i>
+                        <span class="hidden sm:inline">Inventory</span>
+                    </button>
+                    <button onclick="App.setView('profile')" id="nav-profile" class="nav-btn px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                        <i class="ph ph-user text-xl"></i>
+                        <span class="hidden sm:inline">Profile</span>
+                    </button>
+                    
+                    <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 md:mx-2"></div>
+                    
+                    <button onclick="App.toggleTheme()" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors" title="Toggle Theme">
+                        <i id="theme-icon" class="ph ph-moon text-xl"></i>
+                    </button>
+                    
+                    <button onclick="App.logout()" class="p-2 rounded-full text-slate-500 hover:bg-red-50 hover:text-red-500 dark:text-slate-400 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors" title="Sign Out">
+                        <i class="ph ph-sign-out text-xl"></i>
+                    </button>
+                </nav>
             </div>
         </header>
 
-        <!-- Hero Section -->
-        <section class="relative pt-12 pb-16 px-4 text-center overflow-hidden">
-            <div class="max-w-3xl mx-auto relative z-10">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl glass-card gold-border-glow mb-6 animate-float text-gold-400 text-2xl shadow-2xl">
-                    <i class="fa-solid fa-envelope-open-text"></i>
-                </div>
-                <p class="text-xs sm:text-sm uppercase tracking-[0.4em] text-gold-300 font-cinzel mb-3">OFFICIAL INVITATION</p>
-                <h1 class="font-cinzel font-black text-4xl sm:text-6xl tracking-tight text-gold-gradient mb-3 drop-shadow-md">Welcome</h1>
-                
-                <div class="flex items-center justify-center gap-4 my-4">
-                    <div class="h-[1px] w-12 bg-gradient-to-r from-transparent to-gold-400"></div>
-                    <span class="font-playfair italic text-xl sm:text-2xl text-emerald-100 font-semibold tracking-wide">Theme Row</span>
-                    <div class="h-[1px] w-12 bg-gradient-to-l from-transparent to-gold-400"></div>
-                </div>
-
-                <p class="text-gray-300 max-w-lg mx-auto text-sm sm:text-base leading-relaxed font-light mt-4">
-                   We invite you to attend and strengthen the bonds of family at this gathering full of cherished memories.
-                </p>
-
-                <div class="mt-8 inline-block glass-card rounded-2xl px-8 py-5 gold-border-glow shadow-2xl relative">
-                    <span class="text-xs font-cinzel uppercase text-gold-400 tracking-widest block mb-1">Save The Date!</span>
-                    <div class="font-cinzel text-2xl sm:text-3xl font-bold text-white tracking-wider">
-                        <span class="text-gold-300">xx</span> / <span class="text-gold-300">xx</span> / <span class="text-gold-300">xxxx</span>
-                    </div>
-                </div>
-
-                <!-- TOMBOL NAVIGASI MENUJU RSVP -->
-                <div class="mt-10">
-                    <a href="#rsvpSection" class="inline-flex items-center gap-3 px-8 py-4 rounded-full border border-gold-400/50 bg-emerald-900/60 text-gold-300 font-bold font-montserrat text-xs uppercase tracking-wider shadow-lg hover:bg-gold-500 hover:text-emerald-950 hover:scale-105 active:scale-95 transition-all duration-300">
-                        <i class="fa-solid fa-ticket"></i> Klik untuk Reservasi Tiket
-                    </a>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Countdown Timer -->
-        <section class="max-w-3xl mx-auto px-4 my-10" id="countdown-section">
-            <div class="text-center mb-6">
-                <h2 class="font-cinzel text-xl text-gold-300 tracking-widest uppercase">Towards the Peak Day</h2>
-                <div class="w-16 h-[2px] bg-gold-500 mx-auto mt-2"></div>
-            </div>
-            <div class="grid grid-cols-4 gap-3 sm:gap-6 text-center" id="countdown">
-                <div class="glass-card rounded-xl p-3 sm:p-4 border border-gold-500/30">
-                    <span id="cd-days" class="font-cinzel font-bold text-2xl sm:text-4xl text-gold-300 block">xx</span>
-                    <span class="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 mt-1 block">Days</span>
-                </div>
-                <div class="glass-card rounded-xl p-3 sm:p-4 border border-gold-500/30">
-                    <span id="cd-hours" class="font-cinzel font-bold text-2xl sm:text-4xl text-gold-300 block">xx</span>
-                    <span class="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 mt-1 block">Hours</span>
-                </div>
-                <div class="glass-card rounded-xl p-3 sm:p-4 border border-gold-500/30">
-                    <span id="cd-minutes" class="font-cinzel font-bold text-2xl sm:text-4xl text-gold-300 block">xx</span>
-                    <span class="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 mt-1 block">Minutes</span>
-                </div>
-                <div class="glass-card rounded-xl p-3 sm:p-4 border border-gold-500/30">
-                    <span id="cd-seconds" class="font-cinzel font-bold text-2xl sm:text-4xl text-gold-300 block">xx</span>
-                    <span class="text-[10px] sm:text-xs uppercase tracking-wider text-gray-300 mt-1 block">Seconds</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- The Experience -->
-        <section class="max-w-4xl mx-auto px-4 my-14">
-            <div class="glass-card rounded-3xl p-6 sm:p-10 gold-border-glow grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                <div class="md:col-span-5 flex justify-center">
-                    <div class="relative w-full max-w-[280px] aspect-[3/4] rounded-2xl overflow-hidden border-2 border-gold-400/50 shadow-2xl bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-950 flex flex-col justify-between p-6 text-center group">
-                        <div class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-gold-400"></div>
-                        <div class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-gold-400"></div>
-                        <div class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-gold-400"></div>
-                        <div class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-gold-400"></div>
-                        <div class="pt-4">
-                            <span class="text-[10px] tracking-[0.3em] font-cinzel text-gold-300 uppercase">EXCLUSIVE</span>
-                            <h3 class="font-cinzel text-2xl font-bold text-white mt-1">Theme Row</h3>
-                        </div>
-                        <div class="my-auto py-6">
-                            <div class="w-16 h-16 mx-auto rounded-full bg-gold-500/20 border border-gold-400 flex items-center justify-center text-gold-300 text-2xl mb-3"><i class="fa-solid fa-masks-theater"></i></div>
-                            <p class="text-xs text-gold-200/90 italic font-playfair">"Unforgettable Togetherness"</p>
-                        </div>
-                        <div class="pb-2">
-                            <span class="inline-block px-4 py-1 rounded-full text-[11px] font-semibold bg-gold-500 text-emerald-950 font-montserrat uppercase tracking-wider">RSVP BUBARAN</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="md:col-span-7 space-y-4 text-center md:text-left">
-                    <div class="inline-block px-3 py-1 rounded-full text-xs font-cinzel text-gold-300 bg-emerald-900/60 border border-gold-500/30">Highlight Events</div>
-                    <h2 class="font-cinzel text-2xl sm:text-3xl font-bold text-gold-gradient">The Theme Row Experience</h2>
-                    <p class="text-gray-300 text-sm leading-relaxed font-light">
-                        Event <strong class="text-gold-300 font-semibold">XXXXX: Theme Row</strong> dirancang khusus sebagai ruang reuni dan perayaan yang elegan. Menghadirkan suasana hangat, santap bersama, sesi foto, serta hiburan yang akan membawa kita kembali pada momen-momen berharga.
-                    </p>
-                    <div class="pt-2 flex flex-wrap justify-center md:justify-start gap-4 text-xs text-gold-200">
-                        <div class="flex items-center gap-2 bg-emerald-900/40 px-3 py-2 rounded-lg border border-gold-500/20"><i class="fa-solid fa-utensils text-gold-400"></i><span>Banquet</span></div>
-                        <div class="flex items-center gap-2 bg-emerald-900/40 px-3 py-2 rounded-lg border border-gold-500/20"><i class="fa-solid fa-camera text-gold-400"></i><span>Photo Session</span></div>
-                        <div class="flex items-center gap-2 bg-emerald-900/40 px-3 py-2 rounded-lg border border-gold-500/20"><i class="fa-solid fa-music text-gold-400"></i><span>Entertainment</span></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Event Details -->
-        <section class="max-w-5xl mx-auto px-4 my-14">
-            <div class="text-center mb-8">
-                <h2 class="font-cinzel text-2xl font-bold text-gold-gradient tracking-wide uppercase">Event Details</h2>
-                <p class="text-xs text-emerald-200 font-montserrat mt-1">Time & Location</p>
-            </div>
-            
-            <!-- GRID DIPERBARUI: Menjadi 5 Kolom di layar besar -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-                <!-- Card 1 -->
-                <div class="glass-card rounded-2xl p-5 text-center border border-gold-500/30 hover:border-gold-400 transition-all duration-300 group">
-                    <div class="w-12 h-12 rounded-xl bg-gold-500/10 border border-gold-400/40 text-gold-400 flex items-center justify-center text-xl mx-auto mb-3 group-hover:scale-110 transition-transform"><i class="fa-regular fa-calendar-check"></i></div>
-                    <span class="text-xs uppercase tracking-widest text-gold-300 font-cinzel block mb-1">Date</span>
-                    <h3 class="font-cinzel text-lg font-bold text-white">xx / xx / xxxx</h3>
-                    <p class="text-xs text-gray-400 mt-1">Day: xx</p>
-                </div>
-                <!-- Card 2 -->
-                <div class="glass-card rounded-2xl p-5 text-center border border-gold-500/30 hover:border-gold-400 transition-all duration-300 group">
-                    <div class="w-12 h-12 rounded-xl bg-gold-500/10 border border-gold-400/40 text-gold-400 flex items-center justify-center text-xl mx-auto mb-3 group-hover:scale-110 transition-transform"><i class="fa-regular fa-clock"></i></div>
-                    <span class="text-xs uppercase tracking-widest text-gold-300 font-cinzel block mb-1">Time</span>
-                    <h3 class="font-cinzel text-lg font-bold text-white">xx : xx WIB</h3>
-                    <p class="text-xs text-gray-400 mt-1">s/d Selesai</p>
-                </div>
-                <!-- Card 3 -->
-                <div class="glass-card rounded-2xl p-5 text-center border border-gold-500/30 hover:border-gold-400 transition-all duration-300 group">
-                    <div class="w-12 h-12 rounded-xl bg-gold-500/10 border border-gold-400/40 text-gold-400 flex items-center justify-center text-xl mx-auto mb-3 group-hover:scale-110 transition-transform"><i class="fa-solid fa-location-dot"></i></div>
-                    <span class="text-xs uppercase tracking-widest text-gold-300 font-cinzel block mb-1">Place</span>
-                    <h3 class="font-cinzel text-lg font-bold text-white">xx</h3>
-                    <p class="text-xs text-gray-400 mt-1">Venue: xx</p>
-                </div>
-                <!-- Card 4 -->
-                <div class="glass-card rounded-2xl p-5 text-center border border-gold-500/30 hover:border-gold-400 transition-all duration-300 group">
-                    <div class="w-12 h-12 rounded-xl bg-gold-500/10 border border-gold-400/40 text-gold-400 flex items-center justify-center text-xl mx-auto mb-3 group-hover:scale-110 transition-transform"><i class="fa-solid fa-shirt"></i></div>
-                    <span class="text-xs uppercase tracking-widest text-gold-300 font-cinzel block mb-1">Dresscode</span>
-                    <h3 class="font-cinzel text-lg font-bold text-white">xx</h3>
-                    <p class="text-xs text-gray-400 mt-1">Theme: Theme Row</p>
-                </div>
-                <!-- Card 5: Harga / Price -->
-                <div class="glass-card rounded-2xl p-5 text-center border border-gold-500/30 hover:border-gold-400 transition-all duration-300 group">
-                    <div class="w-12 h-12 rounded-xl bg-gold-500/10 border border-gold-400/40 text-gold-400 flex items-center justify-center text-xl mx-auto mb-3 group-hover:scale-110 transition-transform"><i class="fa-solid fa-tag"></i></div>
-                    <span class="text-xs uppercase tracking-widest text-gold-300 font-cinzel block mb-1">Price</span>
-                    <h3 class="font-cinzel text-lg font-bold text-white">Rp xx.xxx</h3>
-                    <p class="text-xs text-gray-400 mt-1">/ Person</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- RSVP Form Section -->
-        <section id="rsvpSection" class="max-w-2xl mx-auto px-4 my-16 pt-10">
-            <div class="glass-card rounded-3xl p-6 sm:p-10 gold-border-glow shadow-2xl relative">
-                <div class="text-center mb-8">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-cinzel text-gold-300 bg-emerald-900/80 border border-gold-500/30 mb-2">
-                        <i class="fa-solid fa-ticket text-gold-400"></i> Confirm Attendance
-                    </div>
-                    <h2 class="font-cinzel text-2xl sm:text-3xl font-bold text-gold-gradient">YOUR TICKET DETAILS</h2>
-                    <p class="text-xs text-gray-300 mt-1 font-light">Please fill in your personal data to claim the official XXXXX ticket</p>
-                </div>
-
-                <form id="rsvpForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
-                    <div>
-                        <label class="block text-xs uppercase font-cinzel tracking-wider text-gold-300 mb-2">Full Name <span class="text-red-400">*</span></label>
-                        <input type="text" id="guestName" required placeholder="Masukkan nama lengkap Anda" class="w-full px-4 py-3 rounded-xl bg-emerald-950/80 border border-gold-500/30 text-white placeholder-gray-500 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 text-sm transition-all">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs uppercase font-cinzel tracking-wider text-gold-300 mb-2">Confirm Attendance <span class="text-red-400">*</span></label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <label class="cursor-pointer">
-                                <input type="radio" name="attendance" value="Hadir Tepat Waktu" checked class="peer sr-only">
-                                <div class="py-2.5 px-3 rounded-xl border border-gold-500/30 bg-emerald-950/60 text-center text-xs font-montserrat text-gray-300 peer-checked:border-gold-400 peer-checked:bg-gold-500/20 peer-checked:text-gold-300 transition-all h-full flex flex-col justify-center"><i class="fa-solid fa-check circle mb-1 block text-sm"></i> Hadir Tepat Waktu</div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="attendance" value="Terlambat" class="peer sr-only">
-                                <div class="py-2.5 px-3 rounded-xl border border-gold-500/30 bg-emerald-950/60 text-center text-xs font-montserrat text-gray-300 peer-checked:border-gold-400 peer-checked:bg-gold-500/20 peer-checked:text-gold-300 transition-all h-full flex flex-col justify-center"><i class="fa-solid fa-clock circle mb-1 block text-sm"></i> Terlambat</div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="attendance" value="Ragu" class="peer sr-only">
-                                <div class="py-2.5 px-3 rounded-xl border border-gold-500/30 bg-emerald-950/60 text-center text-xs font-montserrat text-gray-300 peer-checked:border-gold-400 peer-checked:bg-gold-500/20 peer-checked:text-gold-300 transition-all h-full flex flex-col justify-center"><i class="fa-solid fa-question circle mb-1 block text-sm"></i> Tidak Tahu</div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="attendance" value="Tidak Hadir" class="peer sr-only">
-                                <div class="py-2.5 px-3 rounded-xl border border-gold-500/30 bg-emerald-950/60 text-center text-xs font-montserrat text-gray-300 peer-checked:border-gold-400 peer-checked:bg-gold-500/20 peer-checked:text-gold-300 transition-all h-full flex flex-col justify-center"><i class="fa-solid fa-xmark circle mb-1 block text-sm"></i> Tidak Hadir</div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mb-6">
-                        <label class="block text-xs uppercase tracking-widest text-gold-300 mb-2">Angkatan (Generation) <span class="text-red-400">*</span></label>
-                        <input type="hidden" id="angkatan" required>
-                        <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="51">51</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="52">52</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="53">53</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="54">54</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="55">55</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="56">56</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="57">57</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="58">58</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="59">59</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="60">60</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="61">61</button>
-                            <button type="button" class="gen-btn border border-gold-500/30 text-gold-300 py-2 rounded-sm text-sm hover:bg-gold-500/20 transition" data-val="62">62</button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Main Scrollable Area -->
+        <main class="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 lg:p-8 custom-scroll">
+            <div class="max-w-7xl mx-auto">
+                <!-- INVENTORY VIEW -->
+                <div id="view-inventory" class="space-y-6">
+                    <!-- Header Actions -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <label class="block text-xs uppercase font-cinzel tracking-wider text-gold-300 mb-2">Number of Guest <span class="text-red-400">*</span></label>
-                            <select id="guestCount" required class="w-full px-4 py-3 rounded-xl bg-emerald-950/80 border border-gold-500/30 text-white focus:outline-none focus:border-gold-400 text-sm transition-all">
-                                <option value="1 Orang" class="bg-emerald-950 text-white">1 Orang</option>
-                                <option value="2 Orang" class="bg-emerald-950 text-white">2 Orang</option>
-                                <option value="3+ Orang" class="bg-emerald-950 text-white">3+ Orang</option>
+                            <h1 class="text-2xl sm:text-3xl font-bold dark:text-white">Inventory Management</h1>
+                            <p class="text-slate-500 dark:text-slate-400 mt-1">Track all borrowed and returned items for your event.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="App.exportToCSV()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-lg font-medium shadow-sm flex items-center gap-2 transition-all">
+                                <i class="ph ph-file-csv text-xl text-green-600 dark:text-green-400"></i> Export CSV
+                            </button>
+                            <button onclick="App.openModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg font-medium shadow-sm flex items-center gap-2 transition-all">
+                                <i class="ph ph-plus-circle text-xl"></i> New Item
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-slate-500 dark:text-slate-400 font-medium">Total Items</p>
+                                <i class="ph ph-stack text-xl text-brand-500 bg-brand-50 dark:bg-brand-900/30 p-2 rounded-lg"></i>
+                            </div>
+                            <h3 id="stat-total" class="text-3xl font-bold mt-2 dark:text-white">0</h3>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-slate-500 dark:text-slate-400 font-medium">Currently Borrowed</p>
+                                <i class="ph ph-hand-coins text-xl text-amber-500 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg"></i>
+                            </div>
+                            <h3 id="stat-borrowed" class="text-3xl font-bold mt-2 text-amber-600 dark:text-amber-500">0</h3>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <p class="text-slate-500 dark:text-slate-400 font-medium">Returned Items</p>
+                                <i class="ph ph-check-circle text-xl text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 p-2 rounded-lg"></i>
+                            </div>
+                            <h3 id="stat-returned" class="text-3xl font-bold mt-2 text-emerald-600 dark:text-emerald-500">0</h3>
+                        </div>
+                    </div>
+
+                    <!-- Filter / Search (Basic visual only for layout completeness) -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-4 justify-between items-center">
+                        <div class="relative w-full sm:w-96">
+                            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="search-input" oninput="App.filterItems(this.value)" placeholder="Search items, borrowers, locations..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button onclick="App.setFilter('All')" id="filter-btn-All" class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">All</button>
+                            <button onclick="App.setFilter('Borrowed')" id="filter-btn-Borrowed" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Borrowed</button>
+                            <button onclick="App.setFilter('Returned')" id="filter-btn-Returned" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Returned</button>
+                        </div>
+                    </div>
+
+                    <!-- Inventory Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto custom-scroll">
+                            <table class="w-full text-left border-collapse min-w-[1000px]">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wider">
+                                        <th class="p-4 font-medium">Status</th>
+                                        <th class="p-4 font-medium">Item Details</th>
+                                        <th class="p-4 font-medium">Borrower & Location</th>
+                                        <th class="p-4 font-medium">Borrow Timeline</th>
+                                        <th class="p-4 font-medium">Return Timeline</th>
+                                        <th class="p-4 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="empty-state" class="hidden p-12 text-center text-slate-500 dark:text-slate-400">
+                            <i class="ph ph-package text-5xl mb-3 opacity-50 block mx-auto"></i>
+                            <p class="font-medium text-lg text-slate-800 dark:text-slate-200">No items found</p>
+                            <p class="mt-1">Add a new item to get started tracking your inventory.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROFILE VIEW -->
+                <div id="view-profile" class="hidden max-w-2xl mx-auto space-y-6">
+                    <h1 class="text-2xl sm:text-3xl font-bold dark:text-white mb-2">User Profile</h1>
+                    
+                    <div class="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center gap-6 mb-8 pb-8 border-b border-slate-100 dark:border-slate-700">
+                            <div class="relative group cursor-pointer">
+                                <img id="profile-avatar" src="https://placehold.co/100x100/3b82f6/ffffff?text=U" alt="Profile" class="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-slate-700 shadow-md">
+                                <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i class="ph ph-camera text-white text-xl"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h2 id="profile-display-name" class="text-2xl font-bold dark:text-white">Loading...</h2>
+                                <p id="profile-display-email" class="text-slate-500 dark:text-slate-400">...</p>
+                            </div>
+                        </div>
+                        
+                        <form onsubmit="App.saveProfile(event)" class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
+                                <input type="text" id="profile-input-name" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Organization / Event Name</label>
+                                <input type="text" id="profile-input-org" placeholder="e.g. Tech Conference 2026" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Profile Picture URL</label>
+                                <input type="url" id="profile-input-photo" placeholder="https://..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all" />
+                            </div>
+                            
+                            <div class="pt-4 flex justify-end">
+                                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-6 rounded-xl transition-colors shadow-sm flex items-center gap-2">
+                                    <i class="ph ph-floppy-disk text-lg"></i> Save Profile
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Inventory Form Modal -->
+    <div id="item-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[90vh] flex flex-col modal-enter overflow-hidden">
+            
+            <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
+                <h2 id="modal-title" class="text-xl font-bold dark:text-white">Add New Item</h2>
+                <button onclick="App.closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <i class="ph ph-x text-2xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scroll">
+                <form id="item-form" onsubmit="App.saveItem(event)" class="space-y-5">
+                    <input type="hidden" id="item-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Item Name & Quantity <span class="text-red-500">*</span></label>
+                            <input type="text" id="item-name" required placeholder="e.g. 5x Walkie Talkies, 1x Projector" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Borrower Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="item-borrower" required placeholder="e.g. John Doe (Stage Crew)" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location / Venue</label>
+                            <input type="text" id="item-location" placeholder="e.g. Main Hall A" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Borrow Date & Time <span class="text-red-500">*</span></label>
+                            <input type="datetime-local" id="item-borrow-date" required class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all [color-scheme:light] dark:[color-scheme:dark]">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Expected Return</label>
+                            <input type="datetime-local" id="item-expected-return" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all [color-scheme:light] dark:[color-scheme:dark]">
+                        </div>
+
+                        <div id="actual-return-container" class="md:col-span-2 hidden bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Actual Return Date & Time</label>
+                            <input type="datetime-local" id="item-actual-return" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all [color-scheme:light] dark:[color-scheme:dark]">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                            <select id="item-status" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                                <option value="Borrowed">Borrowed (In Use)</option>
+                                <option value="Returned">Returned</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-xs uppercase font-cinzel tracking-wider text-gold-300 mb-2">WhatsApp Number <span class="text-red-400">*</span></label>
-                            <input type="tel" id="guestPhone" required placeholder="08xxxxxxxxxx" class="w-full px-4 py-3 rounded-xl bg-emerald-950/80 border border-gold-500/30 text-white placeholder-gray-500 focus:outline-none focus:border-gold-400 text-sm transition-all">
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Additional Notes</label>
+                            <textarea id="item-notes" rows="3" placeholder="Condition details, issues, or specific remarks..." class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-brand-500 transition-all resize-none"></textarea>
                         </div>
                     </div>
-
-                    <div>
-                        <label class="block text-xs uppercase font-cinzel tracking-wider text-gold-300 mb-2">Message</label>
-                        <textarea id="guestMessage" rows="3" placeholder="Tuliskan ucapan atau harapan untuk acara ini dan DA'62..." class="w-full px-4 py-3 rounded-xl bg-emerald-950/80 border border-gold-500/30 text-white placeholder-gray-500 focus:outline-none focus:border-gold-400 text-sm transition-all"></textarea>
-                    </div>
-
-                    <button type="submit" id="submitBtn" class="w-full py-3.5 rounded-xl btn-shimmer text-emerald-950 font-bold font-montserrat uppercase tracking-wider text-sm shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex justify-center items-center gap-2">
-                        Send Confirm
-                    </button>
                 </form>
             </div>
-        </section>
 
-        <!-- Footer -->
-        <footer class="text-center py-8 text-xs text-gold-300/70 font-cinzel border-t border-gold-500/10 mt-10">
-            <p>© AmbalanSaba62 — XXXX Edition</p>
-            <p class="mt-1 text-gray-500 font-montserrat text-[10px]">Elegance in Every Moment</p>
-            <p class="text-[10px] tracking-widest uppercase text-gold-300/50 mt-4">&copy; XXXXXX. All Rights Reserved.</p>
-        </footer>
-
-    </main>
-
-    <!-- ========================================== -->
-    <!-- INTERACTIVE RSVP CONFIRMATION MODAL CARD   -->
-    <!-- ========================================== -->
-    <div id="ticketModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
-        <div class="relative w-full max-w-sm glass-card rounded-2xl p-5 sm:p-6 gold-border-glow shadow-2xl text-center transform scale-95 transition-transform duration-300" id="modalCard">
-            
-            <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white w-8 h-8 rounded-full bg-emerald-900/60 flex items-center justify-center transition-all z-10" id="closeModalBtn">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <div class="w-14 h-14 rounded-full bg-gold-500/20 border-2 border-gold-400 text-gold-300 flex items-center justify-center text-2xl mx-auto mb-3 animate-bounce">
-                <i class="fa-solid fa-circle-check"></i>
+            <div class="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 flex justify-end gap-3 rounded-b-2xl">
+                <button type="button" onclick="App.closeModal()" class="px-5 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+                <button type="submit" form="item-form" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-sm transition-colors flex items-center gap-2">
+                    <i class="ph ph-floppy-disk text-lg"></i> Save Item
+                </button>
             </div>
-
-            <span class="text-[10px] font-cinzel uppercase tracking-[0.3em] text-gold-400 block mb-1">E-TICKET RESMI</span>
-            <h3 class="font-cinzel text-xl font-bold text-white mb-1">XXXXX</h3>
-            <p class="text-[11px] text-gold-200 font-playfair italic mb-4">Theme Row</p>
-
-            <div class="bg-emerald-950/90 rounded-xl p-3 border border-gold-500/30 text-left space-y-1.5 mb-4 text-[11px] sm:text-xs">
-                <div class="flex justify-between border-b border-emerald-900 pb-1.5"><span class="text-gray-400">Ticket Code:</span><span id="ticketCode" class="font-mono text-gold-300 font-bold">#BBRN-3062</span></div>
-                <div class="flex justify-between border-b border-emerald-900 pb-1.5"><span class="text-gray-400">Guest Name:</span><span id="modalName" class="text-white font-semibold">-</span></div>
-                <div class="flex justify-between border-b border-emerald-900 pb-1.5"><span class="text-gray-400">Status:</span><span id="modalStatus" class="text-gold-300 font-semibold">-</span></div>
-                <div class="flex justify-between border-b border-emerald-900 pb-1.5"><span class="text-gray-400">Number of Guest:</span><span id="modalCount" class="text-white">-</span></div>
-                <div class="flex justify-between border-b border-emerald-900 pb-1.5"><span class="text-gray-400">Place & Time:</span><span class="text-gold-200 text-right w-1/2">xx / xx / xxxx<br>(Place: xx)</span></div>
-                <div class="flex justify-between pt-1"><span class="text-gray-400">Price:</span><span class="text-gold-300 font-bold">Rp xx.xxx</span></div>
-            </div>
-
-            <p class="text-[10px] text-gray-300 mb-4 font-light leading-tight">Ticket Confirmed! Please save this e-ticket as proof when attending the event.</p>
-
-            <div id="qrcode" class="flex justify-center mb-4 p-2.5 bg-white/10 rounded-xl border border-gold-500/20 mx-auto w-fit"></div>
-
-            <button onclick="downloadTicketImage()" id="downloadBtn" class="w-full py-2.5 mb-2 rounded-xl bg-gold-400 text-emerald-950 font-bold text-[11px] uppercase tracking-wider shadow-lg hover:bg-gold-300 transition-all">
-                <i class="fa-solid fa-download mr-2"></i> Unduh E-Ticket
-            </button>
-            <button onclick="copyTicketInfo()" id="copyBtn" class="w-full py-2.5 rounded-xl btn-shimmer text-emerald-950 font-bold text-[11px] uppercase tracking-wider">
-                <i class="fa-solid fa-copy mr-2"></i> Salin Ringkasan Tiket
-            </button>
-            <p id="copyToast" class="text-[10px] text-gold-300 mt-2 hidden">Ringkasan berhasil disalin!</p>
         </div>
     </div>
 
-    <!-- Scripts for interactivity -->
-    <script>
-        // ==========================================
-        // 1. BLOKIR INSPECT ELEMENT & SOURCE CODE
-        // ==========================================
-        document.addEventListener('contextmenu', event => event.preventDefault());
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+        <i id="toast-icon" class="ph ph-check-circle text-xl text-emerald-400"></i>
+        <span id="toast-message" class="font-medium text-sm">Action successful</span>
+    </div>
 
-        document.onkeydown = function(e) {
-            if (e.key === "F12" || 
-               (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) || 
-               (e.ctrlKey && e.key === "U")) {
-                return false;
-            }
-        };
+    <!-- Firebase & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ==========================================
-        // SCRIPT: LOGIKA SALJU (SNOW CANVAS)
-        // ==========================================
-        const canvas = document.getElementById('snowCanvas');
-        const ctx = canvas.getContext('2d');
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
-        let particles = [];
-        let isSnowing = false;
+        // Global Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-event-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+  apiKey: "AIzaSyB0-om-DA6v9GE8iBxlBwl2nRym4K56gFU",
+  authDomain: "inventaris-a5957.firebaseapp.com",
+  projectId: "inventaris-a5957",
+  storageBucket: "inventaris-a5957.firebasestorage.app",
+  messagingSenderId: "865039278848",
+  appId: "1:865039278848:web:a6160f0b447367686949e5",
+  measurementId: "G-TLXWGGWLGP"
+};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        });
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        for(let i = 0; i < 100; i++) {
-            particles.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                r: Math.random() * 3 + 1, 
-                d: Math.random() * 100 
-            });
-        }
+        // Core App State & Logic exposed to window
+        window.App = {
+            db: db,
+            auth: auth,
+            user: null,
+            items: [],
+            unsubscribeItems: null,
+            currentView: 'inventory',
+            activeFilter: 'All',
+            searchQuery: '',
+            theme: localStorage.getItem('theme') || 'light',
 
-        function drawSnow() {
-            if (!isSnowing) return;
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-            ctx.beginPath();
-            for(let i = 0; i < 100; i++) {
-                let p = particles[i];
-                ctx.moveTo(p.x, p.y);
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2, true);
-            }
-            ctx.fill();
-            updateSnow();
-            requestAnimationFrame(drawSnow);
-        }
-
-        let angle = 0;
-        function updateSnow() {
-            angle += 0.01;
-            for(let i = 0; i < 100; i++) {
-                let p = particles[i];
-                p.y += Math.cos(angle + p.d) + 1 + p.r/2;
-                p.x += Math.sin(angle) * 2;
-
-                if(p.x > width + 5 || p.x < -5 || p.y > height) {
-                    if(i % 3 > 0) {
-                        particles[i] = {x: Math.random() * width, y: -10, r: p.r, d: p.d};
+            // Initialize Application
+            async init() {
+                this.applyTheme();
+                
+                try {
+                    // Strict Authentication initialization as required
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
                     } else {
-                        if(Math.sin(angle) > 0) {
-                            particles[i] = {x: -5, y: Math.random() * height, r: p.r, d: p.d};
-                        } else {
-                            particles[i] = {x: width + 5, y: Math.random() * height, r: p.r, d: p.d};
-                        }
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Auth init error:", error);
+                    // Mock auth logic for local testing without valid keys
+                    if(error.code === 'auth/invalid-api-key') {
+                        console.warn("Running in local mock mode due to invalid API key.");
+                        this.user = { uid: 'local-user-123', isAnonymous: true };
+                        this.handleAuthStateChange(this.user);
                     }
                 }
-            }
-        }
 
-        // ==========================================
-        // FUNGSI MEMBUKA PINTU 3D & MEMICU AUDIO/SALJU
-        // ==========================================
-        function handleOpenDoor() {
-            const viewport = document.querySelector('.door-viewport');
-            const overlay = document.getElementById('doorOverlay');
-            const mainContent = document.getElementById('mainContent');
+                // Listen to auth state
+                onAuthStateChanged(auth, (user) => {
+                    this.handleAuthStateChange(user);
+                });
+            },
 
-            const doorSound = new Audio('Trial 4/audio/door.mp3');
-            doorSound.play().catch(e => console.log("Audio diblokir browser, pastikan file ada: ", e));
-
-            viewport.classList.add('opened');
-
-            setTimeout(() => {
-                overlay.style.opacity = '0';
+            // Handle Auth routing
+            handleAuthStateChange(user) {
+                document.getElementById('loading-screen').classList.add('hidden');
                 
-                setTimeout(() => {
-                    overlay.classList.add('hidden');
-                    mainContent.classList.remove('hidden');
+                if (user) {
+                    this.user = user;
+                    // If user is truly anonymous (and not initiated via platform token), show our beautiful Login screen to prompt Google Login
+                    if (user.isAnonymous && !initialAuthToken) {
+                        this.showLogin();
+                    } else {
+                        this.startMainApp();
+                    }
+                } else {
+                    this.showLogin();
+                }
+            },
+
+            showLogin() {
+                document.getElementById('app-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+            },
+
+            async loginWithGoogle() {
+                const errorEl = document.getElementById('login-error');
+                errorEl.classList.add('hidden');
+                try {
+                    const provider = new GoogleAuthProvider();
+                    // Optional: Custom parameters
+                    provider.setCustomParameters({ prompt: 'select_account' });
+                    await signInWithPopup(this.auth, provider);
+                    // onAuthStateChanged will handle routing
+                } catch (error) {
+                    console.error("Google Login Error:", error);
+                    errorEl.textContent = error.message || "Failed to sign in. Please try again.";
+                    errorEl.classList.remove('hidden');
                     
-                    isSnowing = true;
-                    document.getElementById('snowCanvas').classList.add('active');
-                    drawSnow();
+                    // Fallback to anonymous if popup fails (e.g., iframe restrictions)
+                    if(error.code === 'auth/popup-closed-by-user' || error.message.includes('popup')) {
+                       this.showToast("Login popups might be blocked. Continuing as guest.", "warning");
+                       setTimeout(() => this.startMainApp(), 1500); // Let them in anyway to use the app
+                    }
+                }
+            },
 
-                    window.scrollTo({ top: 0, behavior: 'instant' });
+            async logout() {
+                try {
+                    await signOut(this.auth);
+                    // If we sign out, we should re-authenticate anonymously to keep app usable according to rules
+                    await signInAnonymously(this.auth);
+                } catch (e) {
+                    console.error("Sign out error", e);
+                }
+            },
 
-                    setTimeout(() => {
-                        mainContent.classList.remove('opacity-0');
-                    }, 50);
+            // Main App Start
+            startMainApp() {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                
+                this.loadProfile();
+                this.listenToItems();
+                this.setView('inventory');
+            },
+
+            // --- Theme Management ---
+            toggleTheme() {
+                this.theme = this.theme === 'light' ? 'dark' : 'light';
+                localStorage.setItem('theme', this.theme);
+                this.applyTheme();
+            },
+            applyTheme() {
+                const html = document.documentElement;
+                const icon = document.getElementById('theme-icon');
+                if (this.theme === 'dark') {
+                    html.classList.add('dark');
+                    if(icon) icon.className = 'ph ph-sun text-xl';
+                } else {
+                    html.classList.remove('dark');
+                    if(icon) icon.className = 'ph ph-moon text-xl';
+                }
+            },
+
+            // --- UI View Routing ---
+            setView(view) {
+                this.currentView = view;
+                
+                // Update Nav Buttons
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.className = 'nav-btn px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700';
+                });
+                
+                const activeBtn = document.getElementById(`nav-${view}`);
+                activeBtn.className = 'nav-btn active px-3 py-2 md:px-4 md:py-2 rounded-lg font-medium transition-colors flex items-center gap-2 bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400';
+
+                // Update View Containers
+                document.getElementById('view-inventory').classList.add('hidden');
+                document.getElementById('view-profile').classList.add('hidden');
+                document.getElementById(`view-${view}`).classList.remove('hidden');
+            },
+
+            // --- Profile Data Management ---
+            getProfileRef() {
+                if (!this.user) return null;
+                return doc(this.db, 'artifacts', appId, 'users', this.user.uid, 'profile', 'data');
+            },
+
+            async loadProfile() {
+                const ref = this.getProfileRef();
+                if (!ref) return;
+
+                try {
+                    const docSnap = await getDoc(ref);
+                    let profileData = { name: '', org: '', photo: '' };
                     
-                }, 800); 
-            }, 1200); 
-        }
+                    if (docSnap.exists()) {
+                        profileData = docSnap.data();
+                    } else if (this.user && !this.user.isAnonymous) {
+                        // Fallback to Google Auth data if first time
+                        profileData.name = this.user.displayName || '';
+                        profileData.photo = this.user.photoURL || '';
+                        profileData.email = this.user.email || '';
+                    } else {
+                         profileData.name = 'Guest Organizer';
+                    }
 
-        // ==========================================
-        // COUNTDOWN TIMER LOGIC
-        // ==========================================
-        const targetDate = new Date("March 20, 2027 08:00:00").getTime(); 
+                    // Populate UI
+                    document.getElementById('profile-input-name').value = profileData.name || '';
+                    document.getElementById('profile-input-org').value = profileData.org || '';
+                    document.getElementById('profile-input-photo').value = profileData.photo || '';
+                    
+                    this.updateProfileDisplay(profileData);
+                } catch (e) {
+                    console.error("Error loading profile", e);
+                }
+            },
 
-        const updateCountdown = () => {
-            const now = new Date().getTime();
-            const distance = targetDate - now;
+            async saveProfile(e) {
+                e.preventDefault();
+                if (!this.user) return;
+                
+                const data = {
+                    name: document.getElementById('profile-input-name').value,
+                    org: document.getElementById('profile-input-org').value,
+                    photo: document.getElementById('profile-input-photo').value,
+                    updatedAt: new Date().toISOString()
+                };
 
-            if (distance < 0) {
-                document.getElementById("countdown").innerHTML = "<div class='col-span-4 text-center font-cinzel text-2xl text-gold-400 font-bold'>The Show Has Begun</div>";
-                return;
+                try {
+                    await setDoc(this.getProfileRef(), data, { merge: true });
+                    this.updateProfileDisplay(data);
+                    this.showToast("Profile updated successfully");
+                } catch (error) {
+                    console.error("Error saving profile", error);
+                    this.showToast("Failed to save profile", "error");
+                }
+            },
+
+            updateProfileDisplay(data) {
+                document.getElementById('profile-display-name').textContent = data.name || 'Anonymous User';
+                document.getElementById('profile-display-email').textContent = data.org || (this.user?.email || 'No organization set');
+                
+                const avatar = document.getElementById('profile-avatar');
+                if (data.photo) {
+                    avatar.src = data.photo;
+                } else {
+                    const initial = (data.name || 'U').charAt(0).toUpperCase();
+                    avatar.src = `https://placehold.co/100x100/3b82f6/ffffff?text=${initial}`;
+                }
+            },
+
+            // --- Inventory Data Management ---
+            getItemsCollectionRef() {
+                if (!this.user) return null;
+                // Rule 1: STRICT PATH
+                return collection(this.db, 'artifacts', appId, 'users', this.user.uid, 'inventoryItems');
+            },
+
+            listenToItems() {
+                const ref = this.getItemsCollectionRef();
+                if (!ref) return;
+
+                // Rule 2: NO Complex queries. Fetch all, sort in memory.
+                const q = query(ref);
+                
+                if (this.unsubscribeItems) this.unsubscribeItems();
+                
+                this.unsubscribeItems = onSnapshot(q, (snapshot) => {
+                    this.items = [];
+                    snapshot.forEach(doc => {
+                        this.items.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Sort descending by borrowDate in memory
+                    this.items.sort((a, b) => new Date(b.borrowDate) - new Date(a.borrowDate));
+                    this.renderInventory();
+                }, (error) => {
+                    console.error("Snapshot error:", error);
+                    this.showToast("Connection error. Real-time updates paused.", "error");
+                });
+            },
+
+            // --- UI Rendering ---
+            setFilter(filter) {
+                this.activeFilter = filter;
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700';
+                });
+                document.getElementById(`filter-btn-${filter}`).className = 'filter-btn active px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400';
+                this.renderInventory();
+            },
+
+            filterItems(query) {
+                this.searchQuery = query.toLowerCase();
+                this.renderInventory();
+            },
+
+            formatDate(dateString) {
+                if (!dateString) return '-';
+                const d = new Date(dateString);
+                return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+            },
+
+            renderInventory() {
+                const tbody = document.getElementById('inventory-table-body');
+                const emptyState = document.getElementById('empty-state');
+                
+                // Filtering
+                let filteredItems = this.items.filter(item => {
+                    const matchFilter = this.activeFilter === 'All' || item.status === this.activeFilter;
+                    const matchSearch = (item.name?.toLowerCase().includes(this.searchQuery) || 
+                                         item.borrower?.toLowerCase().includes(this.searchQuery) ||
+                                         item.location?.toLowerCase().includes(this.searchQuery));
+                    return matchFilter && matchSearch;
+                });
+
+                // Stats Update
+                document.getElementById('stat-total').textContent = this.items.length;
+                document.getElementById('stat-borrowed').textContent = this.items.filter(i => i.status === 'Borrowed').length;
+                document.getElementById('stat-returned').textContent = this.items.filter(i => i.status === 'Returned').length;
+
+                if (filteredItems.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                
+                tbody.innerHTML = filteredItems.map(item => {
+                    const isReturned = item.status === 'Returned';
+                    const statusBadge = isReturned 
+                        ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"><i class="ph-fill ph-check-circle"></i> Returned</span>`
+                        : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><i class="ph-fill ph-clock"></i> Borrowed</span>`;
+                    
+                    return `
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                        <td class="p-4 align-top whitespace-nowrap">${statusBadge}</td>
+                        <td class="p-4 align-top">
+                            <p class="font-semibold text-slate-900 dark:text-slate-100 ${isReturned ? 'line-through opacity-75' : ''}">${item.name}</p>
+                            ${item.notes ? `<p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[200px] truncate" title="${item.notes}">${item.notes}</p>` : ''}
+                        </td>
+                        <td class="p-4 align-top">
+                            <div class="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-medium">
+                                <i class="ph ph-user text-slate-400"></i> ${item.borrower}
+                            </div>
+                            ${item.location ? `
+                            <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                <i class="ph ph-map-pin text-slate-400"></i> ${item.location}
+                            </div>` : ''}
+                        </td>
+                        <td class="p-4 align-top text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                            <div class="flex flex-col gap-1">
+                                <span class="font-medium text-slate-800 dark:text-slate-200">${this.formatDate(item.borrowDate)}</span>
+                            </div>
+                        </td>
+                        <td class="p-4 align-top text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                            <div class="flex flex-col gap-1">
+                                ${item.expectedReturn ? `
+                                    <div class="text-xs text-slate-500 mb-0.5">Exp: ${this.formatDate(item.expectedReturn)}</div>
+                                ` : ''}
+                                ${isReturned && item.actualReturn ? `
+                                    <span class="font-medium text-emerald-600 dark:text-emerald-400">Rtn: ${this.formatDate(item.actualReturn)}</span>
+                                ` : ''}
+                            </div>
+                        </td>
+                        <td class="p-4 align-top text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                ${!isReturned ? `
+                                <button onclick="App.quickReturn('${item.id}')" class="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 rounded-lg transition-colors" title="Mark as Returned">
+                                    <i class="ph ph-check-square-offset text-lg"></i>
+                                </button>
+                                ` : ''}
+                                <button onclick="App.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Edit Item">
+                                    <i class="ph ph-pencil-simple text-lg"></i>
+                                </button>
+                                <button onclick="App.deleteItem('${item.id}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Delete Item">
+                                    <i class="ph ph-trash text-lg"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+            },
+
+            // --- Modal & Form Logic ---
+            openModal(itemId = null) {
+                const modal = document.getElementById('item-modal');
+                const form = document.getElementById('item-form');
+                const title = document.getElementById('modal-title');
+                
+                form.reset();
+                
+                // Set default datetime to now for new items
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                const nowStr = now.toISOString().slice(0, 16);
+                
+                document.getElementById('item-status').addEventListener('change', (e) => {
+                    const actualReturnContainer = document.getElementById('actual-return-container');
+                    if (e.target.value === 'Returned') {
+                        actualReturnContainer.classList.remove('hidden');
+                        if (!document.getElementById('item-actual-return').value) {
+                             document.getElementById('item-actual-return').value = nowStr;
+                        }
+                    } else {
+                        actualReturnContainer.classList.add('hidden');
+                    }
+                });
+
+                if (itemId) {
+                    title.textContent = 'Edit Item';
+                    const item = this.items.find(i => i.id === itemId);
+                    if (item) {
+                        document.getElementById('item-id').value = item.id;
+                        document.getElementById('item-name').value = item.name || '';
+                        document.getElementById('item-borrower').value = item.borrower || '';
+                        document.getElementById('item-location').value = item.location || '';
+                        document.getElementById('item-borrow-date').value = item.borrowDate || '';
+                        document.getElementById('item-expected-return').value = item.expectedReturn || '';
+                        document.getElementById('item-actual-return').value = item.actualReturn || '';
+                        document.getElementById('item-status').value = item.status || 'Borrowed';
+                        document.getElementById('item-notes').value = item.notes || '';
+                        
+                        if(item.status === 'Returned') {
+                            document.getElementById('actual-return-container').classList.remove('hidden');
+                        } else {
+                            document.getElementById('actual-return-container').classList.add('hidden');
+                        }
+                    }
+                } else {
+                    title.textContent = 'Add New Item';
+                    document.getElementById('item-id').value = '';
+                    document.getElementById('item-borrow-date').value = nowStr;
+                    document.getElementById('actual-return-container').classList.add('hidden');
+                }
+
+                modal.classList.remove('hidden');
+            },
+
+            closeModal() {
+                document.getElementById('item-modal').classList.add('hidden');
+            },
+
+            async saveItem(e) {
+                e.preventDefault();
+                if (!this.user) return;
+
+                const id = document.getElementById('item-id').value;
+                const status = document.getElementById('item-status').value;
+                
+                const itemData = {
+                    name: document.getElementById('item-name').value,
+                    borrower: document.getElementById('item-borrower').value,
+                    location: document.getElementById('item-location').value,
+                    borrowDate: document.getElementById('item-borrow-date').value,
+                    expectedReturn: document.getElementById('item-expected-return').value,
+                    actualReturn: status === 'Returned' ? document.getElementById('item-actual-return').value : null,
+                    status: status,
+                    notes: document.getElementById('item-notes').value,
+                    updatedAt: new Date().toISOString()
+                };
+
+                const ref = this.getItemsCollectionRef();
+                try {
+                    if (id) {
+                        await updateDoc(doc(ref, id), itemData);
+                        this.showToast("Item updated successfully");
+                    } else {
+                        itemData.createdAt = new Date().toISOString();
+                        await addDoc(ref, itemData);
+                        this.showToast("Item added successfully");
+                    }
+                    this.closeModal();
+                } catch (error) {
+                    console.error("Error saving item", error);
+                    this.showToast("Error saving item", "error");
+                }
+            },
+
+            editItem(id) {
+                this.openModal(id);
+            },
+
+            async quickReturn(id) {
+                if (!this.user) return;
+                const ref = this.getItemsCollectionRef();
+                
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                const nowStr = now.toISOString().slice(0, 16);
+
+                try {
+                    await updateDoc(doc(ref, id), {
+                        status: 'Returned',
+                        actualReturn: nowStr,
+                        updatedAt: new Date().toISOString()
+                    });
+                    this.showToast("Marked as returned");
+                } catch (error) {
+                    this.showToast("Action failed", "error");
+                }
+            },
+
+            // --- Custom Modal logic for Delete to avoid Window Alert/Confirm constraints ---
+            async deleteItem(id) {
+                if (!this.user) return;
+                // Since alert/confirm are forbidden, we directly delete (or could build a custom modal). For simplicity & speed, direct delete with toast.
+                const ref = this.getItemsCollectionRef();
+                try {
+                    await deleteDoc(doc(ref, id));
+                    this.showToast("Item deleted");
+                } catch (error) {
+                    this.showToast("Failed to delete", "error");
+                }
+            },
+
+            // --- Export CSV ---
+            exportToCSV() {
+                if (this.items.length === 0) {
+                    this.showToast("No data to export", "error");
+                    return;
+                }
+
+                const headers = ['Status', 'Item Name', 'Borrower', 'Location', 'Borrow Date', 'Expected Return', 'Actual Return', 'Notes'];
+                const rows = this.items.map(item => [
+                    item.status,
+                    `"${(item.name || '').replace(/"/g, '""')}"`,
+                    `"${(item.borrower || '').replace(/"/g, '""')}"`,
+                    `"${(item.location || '').replace(/"/g, '""')}"`,
+                    item.borrowDate ? item.borrowDate.replace('T', ' ') : '',
+                    item.expectedReturn ? item.expectedReturn.replace('T', ' ') : '',
+                    item.actualReturn ? item.actualReturn.replace('T', ' ') : '',
+                    `"${(item.notes || '').replace(/"/g, '""')}"`
+                ]);
+                
+                const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                
+                // Get Event Name from profile for filename
+                const orgName = document.getElementById('profile-input-org').value || 'Event';
+                const dateStr = new Date().toISOString().split('T')[0];
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `Inventory_${orgName.replace(/\s+/g, '_')}_${dateStr}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.showToast("CSV Exported!");
+            },
+
+            // --- UI Toast ---
+            showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                const msg = document.getElementById('toast-message');
+                const icon = document.getElementById('toast-icon');
+                
+                msg.textContent = message;
+                
+                if (type === 'success') {
+                    icon.className = 'ph ph-check-circle text-xl text-emerald-400';
+                } else if (type === 'error') {
+                    icon.className = 'ph ph-warning-circle text-xl text-red-400';
+                } else {
+                    icon.className = 'ph ph-info text-xl text-amber-400';
+                }
+                
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                
+                // Clear previous timeout if exists
+                if (this.toastTimeout) clearTimeout(this.toastTimeout);
+                
+                this.toastTimeout = setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3000);
             }
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            document.getElementById("cd-days").innerText = days.toString().padStart(2, '0');
-            document.getElementById("cd-hours").innerText = hours.toString().padStart(2, '0');
-            document.getElementById("cd-minutes").innerText = minutes.toString().padStart(2, '0');
-            document.getElementById("cd-seconds").innerText = seconds.toString().padStart(2, '0');
         };
 
-        setInterval(updateCountdown, 1000);
-        updateCountdown();
-
-        // ==========================================
-        // ANGKATAN BUTTON SELECTION LOGIC
-        // ==========================================
-        const genButtons = document.querySelectorAll('.gen-btn');
-        const angkatanInput = document.getElementById('angkatan');
-
-        genButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                genButtons.forEach(b => {
-                    b.classList.remove('bg-gold-400', 'text-emerald-950', 'border-gold-400');
-                    b.classList.add('border-gold-500/30', 'text-gold-300');
-                });
-                btn.classList.remove('border-gold-500/30', 'text-gold-300');
-                btn.classList.add('bg-gold-400', 'text-emerald-950', 'border-gold-400');
-                angkatanInput.value = btn.getAttribute('data-val');
-            });
+        // Boot up
+        document.addEventListener('DOMContentLoaded', () => {
+            window.App.init();
         });
-
-        // ==========================================
-        // FUNGSI HANDLE FORM SUBMIT (DENGAN FORMSPREE)
-        // ==========================================
-        function handleFormSubmit(event) {
-            event.preventDefault();
-            
-            if(!angkatanInput.value) {
-                const msgBox = document.createElement('div');
-                msgBox.className = "fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-900/90 text-white px-6 py-3 rounded-full shadow-lg z-50 text-xs font-montserrat border border-red-500 uppercase tracking-widest";
-                msgBox.innerText = "Please select your Generation (Angkatan).";
-                document.body.appendChild(msgBox);
-                setTimeout(() => msgBox.remove(), 3000);
-                return;
-            }
-
-            const name = document.getElementById('guestName').value;
-            const status = document.querySelector('input[name="attendance"]:checked').value;
-            const count = document.getElementById('guestCount').value;
-            const phone = document.getElementById('guestPhone').value;
-            const message = document.getElementById('guestMessage').value;
-            const code = document.getElementById('ticketCode').innerText;
-            const angkatan = angkatanInput.value;
-
-            const submitBtn = document.getElementById('submitBtn');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Sending...";
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
-
-            const formData = new FormData();
-            formData.append("Nama Lengkap", name);
-            formData.append("Angkatan", angkatan);
-            formData.append("Status Kehadiran", status);
-            formData.append("Jumlah Tamu", count);
-            formData.append("Nomor WhatsApp", phone);
-            formData.append("Pesan / Harapan", message);
-
-            fetch("https://formspree.io/f/xbgdvanj", {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.getElementById('modalName').innerText = name;
-                    document.getElementById('modalStatus').innerText = status;
-                    document.getElementById('modalCount').innerText = count + " (Angkatan " + angkatan + ")";
-
-                    document.getElementById('qrcode').innerHTML = ""; 
-                    const qrData = `Ticket: ${code}\nName: ${name}\nAngkatan: ${angkatan}\nStatus: ${status}\nGuest: ${count}`;
-                    
-                    new QRCode(document.getElementById("qrcode"), {
-                        text: qrData,
-                        width: 150,           
-                        height: 150,          
-                        colorDark: "#000000", 
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.M 
-                    });
-
-                    const modal = document.getElementById('ticketModal');
-                    modal.classList.remove('hidden');
-                    setTimeout(() => {
-                        modal.classList.remove('opacity-0');
-                        document.getElementById('modalCard').classList.remove('scale-95');
-                    }, 10);
-                    
-                    document.getElementById('rsvpForm').reset();
-                    genButtons.forEach(b => {
-                        b.classList.remove('bg-gold-400', 'text-emerald-950', 'border-gold-400');
-                        b.classList.add('border-gold-500/30', 'text-gold-300');
-                    });
-                    angkatanInput.value = "";
-                } else {
-                    alert("Oops! Terjadi kesalahan saat mengirim data. Silakan coba lagi.");
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("Oops! Tidak dapat terhubung ke server (cek koneksi internet Anda).");
-            })
-            .finally(() => {
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-            });
-        }
-
-        // ==========================================
-        // FUNGSI MENUTUP MODAL
-        // ==========================================
-        function closeModal() {
-            const modal = document.getElementById('ticketModal');
-            modal.classList.add('opacity-0');
-            document.getElementById('modalCard').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
-
-        // ==========================================
-        // FUNGSI UNDUH E-TICKET (HTML2CANVAS)
-        // ==========================================
-        function downloadTicketImage() {
-            const modalCard = document.getElementById('modalCard');
-            const btnClose = document.getElementById('closeModalBtn');
-            const btnDownload = document.getElementById('downloadBtn');
-            const btnCopy = document.getElementById('copyBtn');
-            
-            btnClose.style.display = 'none';
-            btnDownload.style.display = 'none';
-            btnCopy.style.display = 'none';
-
-            html2canvas(modalCard, { backgroundColor: '#031710' }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'e-ticket-bubaran-2027.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                btnClose.style.display = 'flex';
-                btnDownload.style.display = 'block';
-                btnCopy.style.display = 'block';
-            });
-        }
-
-        // ==========================================
-        // FUNGSI SALIN RINGKASAN TIKET
-        // ==========================================
-        function copyTicketInfo() {
-            const code = document.getElementById('ticketCode').innerText;
-            const name = document.getElementById('modalName').innerText;
-            const status = document.getElementById('modalStatus').innerText;
-            const count = document.getElementById('modalCount').innerText;
-
-            const textToCopy = `E-Ticket RSVP BUBARAN 2027\nTicket: ${code}\nName: ${name}\nStatus: ${status}\nGuest: ${count}\nPrice: Rp xx.xxx`;
-            
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                const toast = document.getElementById('copyToast');
-                toast.classList.remove('hidden');
-                setTimeout(() => {
-                    toast.classList.add('hidden');
-                }, 2000);
-            });
-        }
     </script>
 </body>
 </html>
