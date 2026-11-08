@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Perkap Event</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons (untuk ikon) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Transisi halus saat ganti tema */
+        .theme-transition { transition: background-color 0.3s, color 0.3s; }
+        /* Custom scrollbar untuk tabel */
+        .custom-scroll::-webkit-scrollbar { height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 theme-transition min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 shadow-sm theme-transition">
+        <div class="max-w-5xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="p-2 bg-indigo-600 rounded-lg text-white">
+                    <i class="ph ph-clipboard-text text-xl"></i>
+                </div>
+                <span class="font-bold text-lg hidden sm:block">PerkapKu</span>
+            </div>
+            
+            <div class="flex items-center gap-1 md:gap-4">
+                <button onclick="App.setView('events')" id="nav-events" class="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <i class="ph ph-calendar-blank text-xl"></i>
+                    <span class="hidden sm:inline">Inventaris</span>
+                </button>
+                <button onclick="App.setView('profile')" id="nav-profile" class="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    <i class="ph ph-user text-xl"></i>
+                    <span class="hidden sm:inline">Profil</span>
+                </button>
+                
+                <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                
+                <button onclick="App.toggleTheme()" class="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors" title="Ubah Tema">
+                    <i id="theme-icon" class="ph ph-moon text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
+        <!-- Konten akan dirender oleh JavaScript di sini -->
+    </main>
+
+    <script>
+        // State & Logika Utama Aplikasi
+        const App = {
+            state: {
+                events: JSON.parse(localStorage.getItem('rekap_events_v1') || '[]'),
+                profile: JSON.parse(localStorage.getItem('rekap_profile_v1') || '{"name":"Admin Event","org":"Organisasi Pemuda","email":""}'),
+                theme: localStorage.getItem('rekap_theme_v1') || 'light',
+                view: 'events', // 'events', 'profile', 'detail'
+                selectedEventId: null
+            },
+
+            // Inisialisasi Aplikasi
+            init() {
+                this.applyTheme();
+                this.render();
+            },
+
+            // Fungsi Penyimpanan (Persist to LocalStorage)
+            saveState() {
+                localStorage.setItem('rekap_events_v1', JSON.stringify(this.state.events));
+                localStorage.setItem('rekap_profile_v1', JSON.stringify(this.state.profile));
+                localStorage.setItem('rekap_theme_v1', this.state.theme);
+            },
+
+            // Manajemen Tema
+            toggleTheme() {
+                this.state.theme = this.state.theme === 'light' ? 'dark' : 'light';
+                this.saveState();
+                this.applyTheme();
+            },
+
+            applyTheme() {
+                const html = document.documentElement;
+                const icon = document.getElementById('theme-icon');
+                if (this.state.theme === 'dark') {
+                    html.classList.add('dark');
+                    icon.className = 'ph ph-sun text-xl';
+                } else {
+                    html.classList.remove('dark');
+                    icon.className = 'ph ph-moon text-xl';
+                }
+            },
+
+            // Navigasi & View
+            setView(viewName) {
+                this.state.view = viewName;
+                if (viewName !== 'detail') this.state.selectedEventId = null;
+                this.render();
+            },
+
+            openEventDetail(eventId) {
+                this.state.selectedEventId = eventId;
+                this.state.view = 'detail';
+                this.render();
+            },
+
+            // Helper: Generate ID acak
+            generateId() {
+                return Math.random().toString(36).substr(2, 9);
+            },
+
+            // Aksi: Events
+            handleAddEvent(event, form) {
+                event.preventDefault();
+                const name = form.eventName.value.trim();
+                const date = form.eventDate.value;
+                const errorMsg = document.getElementById('event-error');
+
+                if (!name) {
+                    errorMsg.textContent = "Nama event tidak boleh kosong!";
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
+                const newEvent = {
+                    id: this.generateId(),
+                    name: name,
+                    date: date || new Date().toISOString().split('T')[0],
+                    items: []
+                };
+
+                this.state.events.push(newEvent);
+                this.saveState();
+                this.render();
+            },
+
+            deleteEvent(id, event) {
+                event.stopPropagation(); // Mencegah klik masuk ke openEventDetail
+                this.state.events = this.state.events.filter(e => e.id !== id);
+                this.saveState();
+                this.render();
+            },
+
+            // Aksi: Items
+            handleAddItem(event, form) {
+                event.preventDefault();
+                const name = form.itemName.value.trim();
+                const qty = form.itemQty.value.trim();
+                const notes = form.itemNotes.value.trim();
+                const errorMsg = document.getElementById('item-error');
+
+                if (!name || !qty) {
+                    errorMsg.textContent = "Nama dan jumlah barang harus diisi!";
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
+                const eventIndex = this.state.events.findIndex(e => e.id === this.state.selectedEventId);
+                if (eventIndex > -1) {
+                    this.state.events[eventIndex].items.push({
+                        id: this.generateId(),
+                        name: name,
+                        quantity: qty,
+                        notes: notes,
+                        status: 'Belum'
+                    });
+                    this.saveState();
+                    this.render();
+                }
+            },
+
+            toggleItemStatus(itemId) {
+                const eventIndex = this.state.events.findIndex(e => e.id === this.state.selectedEventId);
+                if (eventIndex > -1) {
+                    const item = this.state.events[eventIndex].items.find(i => i.id === itemId);
+                    if (item) {
+                        item.status = item.status === 'Belum' ? 'Sudah' : 'Belum';
+                        this.saveState();
+                        this.render();
+                    }
+                }
+            },
+
+            deleteItem(itemId) {
+                const eventIndex = this.state.events.findIndex(e => e.id === this.state.selectedEventId);
+                if (eventIndex > -1) {
+                    this.state.events[eventIndex].items = this.state.events[eventIndex].items.filter(i => i.id !== itemId);
+                    this.saveState();
+                    this.render();
+                }
+            },
+
+            // Aksi: Profil
+            saveProfile(inputElem, field) {
+                this.state.profile[field] = inputElem.value;
+                this.saveState();
+                // Update avatar text jika nama berubah
+                if (field === 'name') {
+                    document.getElementById('avatar-text').textContent = (inputElem.value || 'A').charAt(0).toUpperCase();
+                }
+            },
+
+            // Aksi: Export CSV
+            exportCSV() {
+                const activeEvent = this.state.events.find(e => e.id === this.state.selectedEventId);
+                if (!activeEvent) return;
+
+                const headers = ['Status', 'Nama Barang', 'Jumlah/Satuan', 'Keterangan'];
+                const rows = activeEvent.items.map(item => [
+                    item.status,
+                    `"${item.name.replace(/"/g, '""')}"`,
+                    `"${item.quantity.replace(/"/g, '""')}"`,
+                    `"${(item.notes || '').replace(/"/g, '""')}"`
+                ]);
+                
+                const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `Rekap_${activeEvent.name.replace(/\s+/g, '_')}_${activeEvent.date}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+
+            // Core Render Engine
+            render() {
+                // Update navigasi UI
+                const navEvents = document.getElementById('nav-events');
+                const navProfile = document.getElementById('nav-profile');
+                
+                const activeClass = ['bg-indigo-50', 'dark:bg-indigo-900/30', 'text-indigo-600', 'dark:text-indigo-400'];
+                const inactiveClass = ['text-slate-600', 'dark:text-slate-300', 'hover:bg-slate-50', 'dark:hover:bg-slate-700'];
+
+                navEvents.classList.remove(...activeClass, ...inactiveClass);
+                navProfile.classList.remove(...activeClass, ...inactiveClass);
+
+                if (this.state.view === 'events' || this.state.view === 'detail') {
+                    navEvents.classList.add(...activeClass);
+                    navProfile.classList.add(...inactiveClass);
+                } else {
+                    navProfile.classList.add(...activeClass);
+                    navEvents.classList.add(...inactiveClass);
+                }
+
+                // Render konten berdasarkan view
+                const container = document.getElementById('main-content');
+                if (this.state.view === 'profile') {
+                    container.innerHTML = this.templateProfile();
+                } else if (this.state.view === 'detail') {
+                    container.innerHTML = this.templateEventDetail();
+                } else {
+                    container.innerHTML = this.templateEvents();
+                }
+            },
+
+            // ================= TEMPLATES =================
+
+            templateProfile() {
+                const p = this.state.profile;
+                return `
+                    <div class="max-w-2xl mx-auto mt-4">
+                        <h1 class="text-2xl font-bold mb-6">Profil Pengguna</h1>
+                        <div class="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center gap-4 mb-8 pb-8 border-b border-slate-100 dark:border-slate-700">
+                                <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-3xl font-bold" id="avatar-text">
+                                    ${(p.name || 'A').charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold">${p.name || 'Pengguna'}</h2>
+                                    <p class="text-slate-500 dark:text-slate-400">${p.org || 'Belum ada organisasi'}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Lengkap</label>
+                                    <input type="text" value="${p.name}" oninput="App.saveProfile(this, 'name')"
+                                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Organisasi / Kepanitiaan</label>
+                                    <input type="text" value="${p.org}" oninput="App.saveProfile(this, 'org')"
+                                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nomor Telepon / Email</label>
+                                    <input type="text" value="${p.email}" oninput="App.saveProfile(this, 'email')"
+                                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-6 flex gap-1 items-center">
+                                <i class="ph ph-info text-sm"></i> Data disimpan otomatis di perangkat Anda (LocalStorage).
+                            </p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            templateEvents() {
+                let eventsHtml = '';
+                
+                if (this.state.events.length === 0) {
+                    eventsHtml = `
+                        <div class="bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-12 text-center text-slate-500 dark:text-slate-400 h-full flex flex-col justify-center items-center">
+                            <i class="ph ph-package text-5xl mb-3 opacity-50"></i>
+                            <p>Belum ada event yang dibuat.</p>
+                        </div>
+                    `;
+                } else {
+                    eventsHtml = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">';
+                    this.state.events.forEach(event => {
+                        const total = event.items.length;
+                        const checked = event.items.filter(i => i.status === 'Sudah').length;
+                        const progress = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+                        eventsHtml += `
+                            <div onclick="App.openEventDetail('${event.id}')" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500 transform origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform"></div>
+                                <div class="flex justify-between items-start mb-3">
+                                    <h3 class="font-semibold text-lg line-clamp-1">${event.name}</h3>
+                                    <button onclick="App.deleteEvent('${event.id}', event)" class="text-slate-400 hover:text-red-500 p-1 rounded-md transition-colors" title="Hapus Event">
+                                        <i class="ph ph-trash text-lg"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-4">
+                                    <i class="ph ph-calendar-blank"></i> ${event.date}
+                                </div>
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        <span>Progres Kesiapan</span>
+                                        <span>${progress}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                                        <div class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    eventsHtml += '</div>';
+                }
+
+                return `
+                    <div class="space-y-8 mt-4">
+                        <header class="mb-6">
+                            <h1 class="text-3xl font-bold mb-2">Daftar Event</h1>
+                            <p class="text-slate-500 dark:text-slate-400">Kelola kebutuhan inventaris semua event Anda.</p>
+                        </header>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Form Tambah Event -->
+                            <div class="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 h-fit">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                                    <i class="ph ph-plus-circle text-indigo-600 dark:text-indigo-400 text-2xl"></i> Buat Event Baru
+                                </h2>
+                                <form onsubmit="App.handleAddEvent(event, this)" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Event</label>
+                                        <input type="text" name="eventName" placeholder="Misal: Makrab 2026" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal Event</label>
+                                        <input type="date" name="eventDate" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all [color-scheme:light] dark:[color-scheme:dark]" />
+                                    </div>
+                                    <div id="event-error" class="hidden flex items-center gap-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded-lg"></div>
+                                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors shadow-sm">
+                                        Simpan Event
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- List Event -->
+                            <div class="lg:col-span-2">
+                                ${eventsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            templateEventDetail() {
+                const event = this.state.events.find(e => e.id === this.state.selectedEventId);
+                if (!event) return '<p>Event tidak ditemukan.</p>';
+
+                let itemsHtml = '';
+                if (event.items.length === 0) {
+                    itemsHtml = `
+                        <div class="p-12 text-center text-slate-500 dark:text-slate-400">
+                            <i class="ph ph-clipboard-text text-5xl mb-3 opacity-50 block mx-auto"></i>
+                            <p>Belum ada barang yang ditambahkan ke event ini.</p>
+                        </div>
+                    `;
+                } else {
+                    itemsHtml = `
+                        <div class="overflow-x-auto custom-scroll">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm uppercase tracking-wider">
+                                        <th class="p-4 font-medium rounded-tl-xl w-32">Status</th>
+                                        <th class="p-4 font-medium">Nama Barang</th>
+                                        <th class="p-4 font-medium w-32">Jumlah</th>
+                                        <th class="p-4 font-medium">Keterangan</th>
+                                        <th class="p-4 font-medium text-center rounded-tr-xl w-16">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                    `;
+                    
+                    event.items.forEach(item => {
+                        const isDone = item.status === 'Sudah';
+                        itemsHtml += `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${isDone ? 'bg-emerald-50/30 dark:bg-emerald-900/10' : ''}">
+                                <td class="p-4">
+                                    <button onclick="App.toggleItemStatus('${item.id}')" class="flex items-center gap-2 text-sm font-medium transition-colors">
+                                        ${isDone ? 
+                                            `<span class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 rounded-full"><i class="ph-fill ph-check-circle text-base"></i> Sudah</span>` : 
+                                            `<span class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-full"><i class="ph ph-circle text-base"></i> Belum</span>`
+                                        }
+                                    </button>
+                                </td>
+                                <td class="p-4">
+                                    <p class="font-semibold ${isDone ? 'text-slate-500 line-through' : 'text-slate-800 dark:text-slate-200'}">${item.name}</p>
+                                </td>
+                                <td class="p-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">${item.quantity}</td>
+                                <td class="p-4 text-slate-600 dark:text-slate-400 text-sm">${item.notes || '-'}</td>
+                                <td class="p-4 text-center">
+                                    <button onclick="App.deleteItem('${item.id}')" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Hapus Barang">
+                                        <i class="ph ph-trash text-lg"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    itemsHtml += '</tbody></table></div>';
+                }
+
+                return `
+                    <div class="space-y-6 mt-4">
+                        <button onclick="App.setView('events')" class="flex items-center gap-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 font-medium transition-colors w-fit">
+                            <i class="ph ph-caret-left text-xl"></i> Kembali
+                        </button>
+
+                        <!-- Header Event Detail -->
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div>
+                                <h1 class="text-3xl font-bold mb-2">${event.name}</h1>
+                                <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                    <i class="ph ph-calendar-blank"></i> ${event.date}
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button onclick="App.exportCSV()" class="bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 px-4 py-2.5 rounded-lg font-semibold border border-green-200 dark:border-green-800 flex items-center gap-2 transition-colors">
+                                    <i class="ph ph-download-simple text-lg"></i> Export CSV
+                                </button>
+                                <div class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2.5 rounded-lg font-semibold border border-indigo-100 dark:border-indigo-800 flex items-center gap-2">
+                                    <i class="ph ph-package text-lg"></i> Total: ${event.items.length}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Form Tambah Barang -->
+                            <div class="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 h-fit">
+                                <h2 class="text-xl font-semibold mb-4">Tambah Barang</h2>
+                                <form onsubmit="App.handleAddItem(event, this)" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Barang</label>
+                                        <input type="text" name="itemName" placeholder="Misal: Tenda, Sound System" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Jumlah / Satuan</label>
+                                        <input type="text" name="itemQty" placeholder="Misal: 5 Buah, 1 Set" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Keterangan (Opsional)</label>
+                                        <textarea name="itemNotes" placeholder="Catatan tambahan..." rows="2" class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"></textarea>
+                                    </div>
+                                    <div id="item-error" class="hidden flex items-center gap-2 text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded-lg"></div>
+                                    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors shadow-sm">
+                                        Masukkan ke List
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- List Barang -->
+                            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                                <div class="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 rounded-t-2xl">
+                                    <h2 class="text-xl font-semibold">List Kebutuhan Perkap</h2>
+                                </div>
+                                ${itemsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        // Jalankan aplikasi saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+    </script>
+</body>
+</html>
